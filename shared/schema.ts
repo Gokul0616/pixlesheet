@@ -2,6 +2,14 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  email: text("email"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const spreadsheets = pgTable("spreadsheets", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -111,6 +119,12 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
   createdAt: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type User = typeof users.$inferSelect;
 export type Spreadsheet = typeof spreadsheets.$inferSelect;
 export type Sheet = typeof sheets.$inferSelect;
 export type Cell = typeof cells.$inferSelect;
@@ -118,6 +132,7 @@ export type Comment = typeof comments.$inferSelect;
 export type Collaborator = typeof collaborators.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
 
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSpreadsheet = z.infer<typeof insertSpreadsheetSchema>;
 export type InsertSheet = z.infer<typeof insertSheetSchema>;
 export type InsertCell = z.infer<typeof insertCellSchema>;

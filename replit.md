@@ -2,7 +2,14 @@
 
 ## Overview
 
-This is a comprehensive Google Sheets clone built with modern web technologies. The application features a full-stack architecture with real-time collaboration capabilities, advanced spreadsheet functionality, and a polished user interface that closely mimics Google Sheets.
+This is a comprehensive Google Sheets clone built with modern web technologies. The application features a full-stack architecture with real-time collaboration capabilities, advanced spreadsheet functionality, and a polished user interface that closely mimics Google Sheets. 
+
+### Recent Updates (January 2025)
+- ✓ Implemented comprehensive FormattingToolbar with bold, italic, underline, font selection, colors, and alignment
+- ✓ Added real-time WebSocket collaboration with live user presence indicators
+- ✓ Created ShareDialog component for managing spreadsheet permissions and collaborators
+- ✓ Integrated online/offline status indicators and connection management
+- ✓ Enhanced UI with live collaboration features similar to Google Sheets
 
 ## User Preferences
 

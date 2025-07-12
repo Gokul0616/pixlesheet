@@ -3,18 +3,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Grid } from "@/components/spreadsheet/Grid";
 import { FormulaBar } from "@/components/spreadsheet/FormulaBar";
-import { Toolbar } from "@/components/spreadsheet/Toolbar";
+import { FormattingToolbar } from "@/components/spreadsheet/FormattingToolbar";
 import { SheetTabs } from "@/components/spreadsheet/SheetTabs";
 import { Sidebar } from "@/components/spreadsheet/Sidebar";
+import { ShareDialog } from "@/components/spreadsheet/ShareDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Share, Edit2, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Share, Edit2, Users, Wifi, WifiOff } from "lucide-react";
 import { useSpreadsheet } from "@/hooks/use-spreadsheet";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 export default function SpreadsheetPage() {
   const params = useParams();
   const spreadsheetId = params.id ? parseInt(params.id) : 1;
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [selectedCells, setSelectedCells] = useState<{ row: number; column: number; sheetId: number }[]>([]);
 
   const { data: spreadsheet, isLoading: isLoadingSpreadsheet } = useQuery({
     queryKey: ["/api/spreadsheets", spreadsheetId],
@@ -42,6 +46,54 @@ export default function SpreadsheetPage() {
     setIsEditing,
     saveStatus,
   } = useSpreadsheet(spreadsheetId);
+
+  // WebSocket integration for real-time collaboration
+  const {
+    isConnected,
+    onlineUsers,
+    realtimeUpdates,
+    sendCellUpdate,
+    sendCursorMove,
+    sendSelectionChange,
+    sendCommentAdd,
+    sendTypingStart,
+    sendTypingStop,
+  } = useWebSocket(spreadsheetId, 1, "Demo User");
+
+  // Handle toolbar actions
+  const handleToolbarAction = (action: string, data?: any) => {
+    switch (action) {
+      case 'insertRow':
+        console.log('Insert row:', data);
+        break;
+      case 'insertColumn':
+        console.log('Insert column:', data);
+        break;
+      case 'deleteRow':
+        console.log('Delete row:', data);
+        break;
+      case 'deleteColumn':
+        console.log('Delete column:', data);
+        break;
+      case 'copy':
+        console.log('Copy:', data);
+        break;
+      case 'cut':
+        console.log('Cut:', data);
+        break;
+      case 'paste':
+        console.log('Paste:', data);
+        break;
+      case 'undo':
+        console.log('Undo:', data);
+        break;
+      case 'redo':
+        console.log('Redo:', data);
+        break;
+      default:
+        console.log('Unknown action:', action, data);
+    }
+  };
 
   if (isLoadingSpreadsheet || isLoadingSheets) {
     return (
@@ -81,30 +133,78 @@ export default function SpreadsheetPage() {
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Collaboration indicators */}
+            {/* Real-time collaboration indicators */}
             <div className="flex items-center space-x-2">
-              <div className="flex -space-x-2">
-                {collaborators?.slice(0, 3).map((collaborator, index) => (
-                  <div
-                    key={collaborator.id}
-                    className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium border-2 border-white"
-                  >
-                    {index + 1}
-                  </div>
-                ))}
+              {/* Connection Status */}
+              <div className="flex items-center space-x-1">
+                {isConnected ? (
+                  <Wifi className="w-4 h-4 text-green-500" />
+                ) : (
+                  <WifiOff className="w-4 h-4 text-red-500" />
+                )}
+                <span className="text-xs text-gray-500">
+                  {isConnected ? 'Live' : 'Offline'}
+                </span>
               </div>
-              <span className="text-sm text-gray-600">
-                {collaborators?.length || 0} editing
-              </span>
+              
+              {/* Online Users */}
+              {onlineUsers.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <div className="flex -space-x-2">
+                    {onlineUsers.slice(0, 3).map((user, index) => (
+                      <div
+                        key={`online-${user.id}-${index}`}
+                        className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm font-medium border-2 border-white"
+                        title={user.username}
+                      >
+                        {user.username?.charAt(0)?.toUpperCase() || (index + 1)}
+                      </div>
+                    ))}
+                    {onlineUsers.length > 3 && (
+                      <div className="w-8 h-8 rounded-full bg-gray-500 text-white flex items-center justify-center text-sm font-medium border-2 border-white">
+                        +{onlineUsers.length - 3}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    {onlineUsers.length} online
+                  </span>
+                </div>
+              )}
+              
+              {/* Fallback for collaborators when offline */}
+              {!isConnected && collaborators && collaborators.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <div className="flex -space-x-2">
+                    {collaborators.slice(0, 3).map((collaborator, index) => (
+                      <div
+                        key={`collaborator-${collaborator.id}-${index}`}
+                        className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-medium border-2 border-white"
+                      >
+                        {index + 1}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    {collaborators.length} collaborator{collaborators.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
             </div>
             
-            <Button className="bg-primary hover:bg-primary/90">
-              <Share className="w-4 h-4 mr-2" />
-              Share
-            </Button>
+            {/* Share Dialog */}
+            <ShareDialog
+              spreadsheetId={spreadsheetId}
+              spreadsheetName={spreadsheet?.name || "Untitled"}
+              isPublic={spreadsheet?.isPublic || false}
+              collaborators={collaborators || []}
+              onlineUsers={onlineUsers}
+            />
             
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">{saveStatus}</span>
+              <Badge variant={isConnected ? "default" : "secondary"}>
+                {saveStatus}
+              </Badge>
             </div>
           </div>
         </div>
@@ -124,8 +224,12 @@ export default function SpreadsheetPage() {
         </div>
       </nav>
 
-      {/* Toolbar */}
-      <Toolbar />
+      {/* Formatting Toolbar */}
+      <FormattingToolbar
+        selectedCell={selectedCell}
+        selectedCells={selectedCells}
+        onAction={handleToolbarAction}
+      />
 
       {/* Formula Bar */}
       <FormulaBar

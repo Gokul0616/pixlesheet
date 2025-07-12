@@ -28,6 +28,8 @@ export function Grid({
   setFormulaValue,
   onCellUpdate,
   realtimeUpdates = [],
+  gridLinesVisible = true,
+  zoom = 100,
 }: GridProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; cell: string } | null>(null);
   const [selection, setSelection] = useState<{ start: string; end: string } | null>(null);

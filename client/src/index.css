@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap');
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(224, 71%, 4%);
+  --muted: hsl(220, 14%, 96%);
+  --muted-foreground: hsl(220, 9%, 46%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(224, 71%, 4%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(224, 71%, 4%);
+  --border: hsl(220, 13%, 91%);
+  --input: hsl(220, 13%, 91%);
+  --primary: hsl(221, 83%, 53%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(220, 14%, 96%);
+  --secondary-foreground: hsl(220, 9%, 9%);
+  --accent: hsl(220, 14%, 96%);
+  --accent-foreground: hsl(220, 9%, 9%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(221, 83%, 53%);
+  --radius: 0.5rem;
+
+  /* Google Sheets specific colors */
+  --google-blue: hsl(211, 100%, 50%);
+  --google-green: hsl(120, 52%, 44%);
+  --google-yellow: hsl(45, 100%, 51%);
+  --google-red: hsl(4, 90%, 58%);
+  --google-gray-50: hsl(210, 20%, 98%);
+  --google-gray-100: hsl(220, 14%, 96%);
+  --google-gray-200: hsl(220, 13%, 91%);
+  --google-gray-300: hsl(216, 12%, 84%);
+  --google-gray-400: hsl(218, 11%, 65%);
+  --google-gray-500: hsl(220, 9%, 46%);
+  --google-gray-600: hsl(215, 14%, 34%);
+  --google-gray-700: hsl(217, 19%, 27%);
+  --google-gray-800: hsl(215, 28%, 17%);
+  --google-gray-900: hsl(221, 39%, 11%);
+}
+
+.dark {
+  --background: hsl(224, 71%, 4%);
+  --foreground: hsl(210, 40%, 98%);
+  --muted: hsl(223, 47%, 11%);
+  --muted-foreground: hsl(215, 20%, 65%);
+  --popover: hsl(224, 71%, 4%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --card: hsl(224, 71%, 4%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --border: hsl(216, 34%, 17%);
+  --input: hsl(216, 34%, 17%);
+  --primary: hsl(221, 83%, 53%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(223, 47%, 11%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(223, 47%, 11%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 63%, 31%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(221, 83%, 53%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  .font-roboto {
+    font-family: 'Roboto', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'Roboto Mono', monospace;
+  }
+}
+
+@layer components {
+  .cell-grid {
+    display: grid;
+    grid-template-columns: 40px repeat(26, 100px);
+    grid-template-rows: 24px repeat(50, 21px);
+  }
+
+  .cell {
+    @apply border-r border-b border-gray-200 relative font-roboto text-sm;
+    overflow: hidden;
+  }
+
+  .cell:hover {
+    @apply bg-gray-50;
+  }
+
+  .cell.selected {
+    @apply bg-blue-50 border-blue-500 border-2;
+  }
+
+  .cell.editing {
+    @apply bg-white border-blue-500 border-2 z-10;
+  }
+
+  .column-header,
+  .row-header {
+    @apply bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer;
+  }
+
+  .column-header:hover,
+  .row-header:hover {
+    @apply bg-gray-100;
+  }
+
+  .resize-handle {
+    @apply absolute right-0 top-0 bottom-0 w-1 cursor-col-resize bg-transparent;
+  }
+
+  .resize-handle:hover {
+    @apply bg-primary;
+  }
+
+  .formula-bar {
+    @apply h-8 border border-gray-200 rounded font-mono text-sm px-2 bg-white;
+  }
+
+  .formula-bar:focus {
+    @apply outline-none border-primary ring-1 ring-primary;
+  }
+
+  .sheet-tab {
+    @apply px-4 py-2 border-t border-r border-gray-200 bg-white cursor-pointer text-sm text-gray-600;
+  }
+
+  .sheet-tab.active {
+    @apply bg-gray-50 border-b-2 border-b-primary text-primary;
+  }
+
+  .sheet-tab:hover {
+    @apply bg-gray-50;
+  }
+
+  .toolbar-button {
+    @apply px-3 py-2 rounded cursor-pointer text-sm text-gray-700 transition-colors;
+  }
+
+  .toolbar-button:hover {
+    @apply bg-gray-50;
+  }
+
+  .toolbar-button.active {
+    @apply bg-blue-50 text-primary;
+  }
+
+  .loading-spinner {
+    @apply border-2 border-gray-200 border-t-primary rounded-full w-5 h-5 animate-spin;
+  }
+
+  .collaboration-cursor {
+    @apply absolute pointer-events-none z-50;
+  }
+
+  .collaboration-cursor::after {
+    content: attr(data-user);
+    @apply absolute -top-5 left-0 bg-primary text-white px-2 py-1 rounded text-xs whitespace-nowrap;
+  }
+
+  .comment-indicator {
+    @apply absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-yellow-500 rounded-full;
+  }
+
+  .context-menu {
+    @apply absolute z-50 bg-white border border-gray-200 rounded shadow-lg min-w-44;
+  }
+
+  .context-menu-item {
+    @apply px-3 py-2 cursor-pointer text-sm text-gray-700 hover:bg-gray-50;
+  }
+
+  .context-menu-divider {
+    @apply h-px bg-gray-200 my-1;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

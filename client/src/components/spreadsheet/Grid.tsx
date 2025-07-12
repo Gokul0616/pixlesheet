@@ -190,8 +190,8 @@ export function Grid({
   const COLUMNS = 26;
 
   return (
-    <div className="relative h-full overflow-auto" ref={gridRef}>
-      <div className="grid grid-cols-[40px_repeat(26,100px)] grid-rows-[24px_repeat(50,21px)] border-t border-l border-gray-200">
+    <div className="relative h-full overflow-auto" ref={gridRef} style={{ zoom: `${zoom}%` }}>
+      <div className={`grid grid-cols-[40px_repeat(26,100px)] grid-rows-[24px_repeat(50,21px)] ${gridLinesVisible ? 'border-t border-l border-gray-200' : ''}`}>
         {/* Corner cell */}
         <div className="bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center text-xs font-medium text-gray-600"></div>
 

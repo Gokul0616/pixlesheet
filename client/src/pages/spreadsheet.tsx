@@ -21,6 +21,10 @@ export default function SpreadsheetPage() {
   const spreadsheetId = params.id ? parseInt(params.id) : 1;
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedCells, setSelectedCells] = useState<{ row: number; column: number; sheetId: number }[]>([]);
+  const [formulaBarVisible, setFormulaBarVisible] = useState(true);
+  const [gridLinesVisible, setGridLinesVisible] = useState(true);
+  const [zoom, setZoom] = useState(100);
+  const { toast } = useToast();
 
   const { data: spreadsheet, isLoading: isLoadingSpreadsheet } = useQuery({
     queryKey: ["/api/spreadsheets", spreadsheetId],

@@ -328,18 +328,18 @@ export default function SpreadsheetPage() {
       </header>
 
       {/* Menu Bar */}
-      <nav className="bg-white border-b border-gray-200 px-4 py-1">
-        <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="sm">File</Button>
-          <Button variant="ghost" size="sm">Edit</Button>
-          <Button variant="ghost" size="sm">View</Button>
-          <Button variant="ghost" size="sm">Insert</Button>
-          <Button variant="ghost" size="sm">Format</Button>
-          <Button variant="ghost" size="sm">Data</Button>
-          <Button variant="ghost" size="sm">Tools</Button>
-          <Button variant="ghost" size="sm">Help</Button>
-        </div>
-      </nav>
+      <MenuBar
+        spreadsheetId={spreadsheetId}
+        selectedCell={selectedCell?.row && selectedCell?.column ? `${String.fromCharCode(64 + selectedCell.column)}${selectedCell.row}` : null}
+        selectedCells={selectedCells}
+        onAction={handleToolbarAction}
+        formulaBarVisible={formulaBarVisible}
+        gridLinesVisible={gridLinesVisible}
+        onToggleFormulaBar={() => setFormulaBarVisible(!formulaBarVisible)}
+        onToggleGridLines={() => setGridLinesVisible(!gridLinesVisible)}
+        onZoomChange={setZoom}
+        zoom={zoom}
+      />
 
       {/* Formatting Toolbar */}
       <FormattingToolbar

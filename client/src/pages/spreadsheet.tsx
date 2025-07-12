@@ -373,6 +373,8 @@ export default function SpreadsheetPage() {
               setFormulaValue={setFormulaValue}
               onCellUpdate={handleCellUpdate}
               realtimeUpdates={realtimeUpdates}
+              gridLinesVisible={gridLinesVisible}
+              zoom={zoom}
             />
           )}
         </div>

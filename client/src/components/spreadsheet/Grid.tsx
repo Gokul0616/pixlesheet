@@ -193,13 +193,13 @@ export function Grid({
     <div className="relative h-full overflow-auto" ref={gridRef} style={{ zoom: `${zoom}%` }}>
       <div className={`grid grid-cols-[40px_repeat(26,100px)] grid-rows-[24px_repeat(50,21px)] ${gridLinesVisible ? 'border-t border-l border-gray-200' : ''}`}>
         {/* Corner cell */}
-        <div className="bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center text-xs font-medium text-gray-600"></div>
+        <div className={`bg-gray-50 ${gridLinesVisible ? 'border-r border-b border-gray-200' : ''} flex items-center justify-center text-xs font-medium text-gray-600`}></div>
 
         {/* Column headers */}
         {Array.from({ length: COLUMNS }, (_, i) => (
           <div
             key={`col-${i}`}
-            className="bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-100 relative"
+            className={`bg-gray-50 ${gridLinesVisible ? 'border-r border-b border-gray-200' : ''} flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-100 relative`}
             onClick={() => {
               // TODO: Implement column selection
             }}

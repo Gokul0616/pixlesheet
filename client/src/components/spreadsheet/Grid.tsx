@@ -13,6 +13,8 @@ interface GridProps {
   setIsEditing: (editing: boolean) => void;
   formulaValue: string;
   setFormulaValue: (value: string) => void;
+  onCellUpdate?: (row: number, column: number, value: string, formula?: string) => void;
+  realtimeUpdates?: any[];
 }
 
 export function Grid({
@@ -22,6 +24,8 @@ export function Grid({
   setIsEditing,
   formulaValue,
   setFormulaValue,
+  onCellUpdate,
+  realtimeUpdates = [],
 }: GridProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; cell: string } | null>(null);
   const [selection, setSelection] = useState<{ start: string; end: string } | null>(null);
@@ -38,7 +42,12 @@ export function Grid({
       const response = await apiRequest("PUT", `/api/sheets/${sheetId}/cells/${row}/${column}`, updates);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Immediately broadcast to WebSocket for real-time updates
+      if (onCellUpdate) {
+        onCellUpdate(variables.row, variables.column, variables.updates.value, variables.updates.formula);
+      }
+      
       queryClient.invalidateQueries({ queryKey: ["/api/sheets", sheetId, "cells"] });
     },
     onError: (error) => {

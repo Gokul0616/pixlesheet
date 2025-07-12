@@ -60,6 +60,20 @@ export default function SpreadsheetPage() {
     sendTypingStop,
   } = useWebSocket(spreadsheetId, 1, "Demo User");
 
+  // Handle real-time cell updates
+  const handleCellUpdate = (row: number, column: number, value: string, formula?: string) => {
+    const cellData = {
+      row,
+      column,
+      sheetId: activeSheet,
+      value,
+      formula
+    };
+    
+    // Broadcast to other users instantly
+    sendCellUpdate(cellData, value, formula);
+  };
+
   // Handle toolbar actions
   const handleToolbarAction = (action: string, data?: any) => {
     switch (action) {
@@ -252,6 +266,8 @@ export default function SpreadsheetPage() {
               setIsEditing={setIsEditing}
               formulaValue={formulaValue}
               setFormulaValue={setFormulaValue}
+              onCellUpdate={handleCellUpdate}
+              realtimeUpdates={realtimeUpdates}
             />
           )}
         </div>

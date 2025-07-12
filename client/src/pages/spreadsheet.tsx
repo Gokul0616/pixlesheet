@@ -349,13 +349,15 @@ export default function SpreadsheetPage() {
       />
 
       {/* Formula Bar */}
-      <FormulaBar
-        selectedCell={selectedCell}
-        formulaValue={formulaValue}
-        setFormulaValue={setFormulaValue}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-      />
+      {formulaBarVisible && (
+        <FormulaBar
+          selectedCell={selectedCell}
+          formulaValue={formulaValue}
+          setFormulaValue={setFormulaValue}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+        />
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">

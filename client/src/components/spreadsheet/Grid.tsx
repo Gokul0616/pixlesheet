@@ -216,7 +216,7 @@ export function Grid({
             <div key={`row-${row}`} className="contents">
               {/* Row header */}
               <div
-                className="bg-gray-50 border-r border-b border-gray-200 flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-100"
+                className={`bg-gray-50 ${gridLinesVisible ? 'border-r border-b border-gray-200' : ''} flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-100`}
                 onClick={() => {
                   // TODO: Implement row selection
                 }}

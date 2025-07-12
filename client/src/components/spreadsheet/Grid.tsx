@@ -15,6 +15,8 @@ interface GridProps {
   setFormulaValue: (value: string) => void;
   onCellUpdate?: (row: number, column: number, value: string, formula?: string) => void;
   realtimeUpdates?: any[];
+  gridLinesVisible?: boolean;
+  zoom?: number;
 }
 
 export function Grid({

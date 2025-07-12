@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Grid } from "@/components/spreadsheet/Grid";
 import { FormulaBar } from "@/components/spreadsheet/FormulaBar";
 import { FormattingToolbar } from "@/components/spreadsheet/FormattingToolbar";
+import { MenuBar } from "@/components/spreadsheet/MenuBar";
 import { SheetTabs } from "@/components/spreadsheet/SheetTabs";
 import { Sidebar } from "@/components/spreadsheet/Sidebar";
 import { ShareDialog } from "@/components/spreadsheet/ShareDialog";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Share, Edit2, Users, Wifi, WifiOff } from "lucide-react";
 import { useSpreadsheet } from "@/hooks/use-spreadsheet";
 import { useWebSocket } from "@/hooks/use-websocket";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SpreadsheetPage() {
   const params = useParams();

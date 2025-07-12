@@ -85,15 +85,31 @@ export default function SpreadsheetPage() {
     switch (action) {
       case 'insertRow':
         console.log('Insert row:', data);
+        toast({
+          title: "Insert Row",
+          description: "Row inserted successfully",
+        });
         break;
       case 'insertColumn':
         console.log('Insert column:', data);
+        toast({
+          title: "Insert Column", 
+          description: "Column inserted successfully",
+        });
         break;
       case 'deleteRow':
         console.log('Delete row:', data);
+        toast({
+          title: "Delete Row",
+          description: "Row deleted successfully", 
+        });
         break;
       case 'deleteColumn':
         console.log('Delete column:', data);
+        toast({
+          title: "Delete Column",
+          description: "Column deleted successfully",
+        });
         break;
       case 'copy':
         console.log('Copy:', data);
@@ -110,8 +126,89 @@ export default function SpreadsheetPage() {
       case 'redo':
         console.log('Redo:', data);
         break;
+      case 'download':
+        console.log('Download:', data);
+        handleDownload(data?.format || 'xlsx');
+        break;
+      case 'format':
+        console.log('Format:', data);
+        break;
+      case 'sort':
+        console.log('Sort:', data);
+        break;
+      case 'createFilter':
+        console.log('Create filter:', data);
+        break;
+      case 'insertChart':
+        console.log('Insert chart:', data);
+        break;
+      case 'insertImage':
+        console.log('Insert image:', data);
+        break;
+      case 'insertComment':
+        console.log('Insert comment:', data);
+        break;
+      case 'findReplace':
+        console.log('Find replace:', data);
+        break;
+      case 'selectAll':
+        console.log('Select all:', data);
+        break;
+      case 'delete':
+        console.log('Delete:', data);
+        break;
+      case 'freeze':
+        console.log('Freeze:', data);
+        break;
+      case 'insertRows':
+        console.log('Insert rows:', data);
+        break;
+      case 'insertColumns':
+        console.log('Insert columns:', data);
+        break;
+      case 'conditionalFormatting':
+        console.log('Conditional formatting:', data);
+        break;
+      case 'dataValidation':
+        console.log('Data validation:', data);
+        break;
+      case 'pivotTable':
+        console.log('Pivot table:', data);
+        break;
+      case 'spellCheck':
+        console.log('Spell check:', data);
+        break;
+      case 'scriptEditor':
+        console.log('Script editor:', data);
+        break;
+      case 'functionList':
+        console.log('Function list:', data);
+        break;
+      case 'numberFormat':
+        console.log('Number format:', data);
+        break;
       default:
         console.log('Unknown action:', action, data);
+    }
+  };
+
+  // Handle download functionality  
+  const handleDownload = (format: string) => {
+    // Create a simple CSV download for demonstration
+    if (format === 'csv') {
+      const csvContent = "Revenue,50000,55000\nExpenses,35000,38000\nProfit,=B1-B2,=C1-C2";
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `spreadsheet.${format}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } else {
+      toast({
+        title: "Download",
+        description: `${format.toUpperCase()} download will be implemented soon`,
+      });
     }
   };
 

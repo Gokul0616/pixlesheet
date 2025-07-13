@@ -525,21 +525,31 @@ export default function SpreadsheetPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Grid */}
-        <div className="flex-1 overflow-hidden">
+        {/* Grid with Chart Overlay */}
+        <div className="flex-1 overflow-hidden relative">
           {currentSheet && (
-            <Grid
-              sheetId={currentSheet.id}
-              selectedCell={selectedCell}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
-              formulaValue={formulaValue}
-              setFormulaValue={setFormulaValue}
-              onCellUpdate={handleCellUpdate}
-              realtimeUpdates={realtimeUpdates}
-              gridLinesVisible={gridLinesVisible}
-              zoom={zoom}
-            />
+            <>
+              <ResizableGrid
+                sheetId={currentSheet.id}
+                selectedCell={selectedCell}
+                isEditing={isEditing}
+                setIsEditing={setIsEditing}
+                formulaValue={formulaValue}
+                setFormulaValue={setFormulaValue}
+                onCellUpdate={handleCellUpdate}
+                realtimeUpdates={realtimeUpdates}
+                gridLinesVisible={gridLinesVisible}
+                zoom={zoom}
+                onCellSelect={handleCellSelect}
+              />
+              
+              {/* Chart Overlay */}
+              <ChartManager
+                sheetId={currentSheet.id}
+                charts={charts}
+                onChartsUpdate={setCharts}
+              />
+            </>
           )}
         </div>
 

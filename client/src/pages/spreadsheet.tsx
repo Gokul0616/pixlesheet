@@ -72,7 +72,16 @@ export default function SpreadsheetPage() {
     sendTypingStop,
   } = useWebSocket(spreadsheetId, 1, "Demo User");
 
-  // Handle real-time cell updates
+  // Handle cell selection
+  const handleCellSelect = (row: number, column: number) => {
+    setSelectedCell({ row, column, sheetId: activeSheet || 1 });
+    setFormulaValue(getCellDisplayValue(row, column));
+  };
+
+  const getCellDisplayValue = (row: number, column: number) => {
+    // This would normally come from the cells data
+    return "";
+  };
   const handleCellUpdate = (row: number, column: number, value: string, formula?: string) => {
     const cellData = {
       row,

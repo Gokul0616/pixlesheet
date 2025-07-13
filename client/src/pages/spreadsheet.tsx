@@ -147,6 +147,13 @@ export default function SpreadsheetPage() {
         break;
       case 'insertChart':
         console.log('Insert chart:', data);
+        if (data?.config) {
+          addChart(data.config);
+          toast({
+            title: "Chart Inserted",
+            description: `${data.config.type} chart added to spreadsheet`,
+          });
+        }
         break;
       case 'insertImage':
         console.log('Insert image:', data);

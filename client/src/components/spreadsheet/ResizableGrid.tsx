@@ -384,17 +384,27 @@ export function ResizableGrid({
   return (
     <div 
       ref={gridRef}
-      className="flex-1 overflow-auto bg-white relative scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300" 
+      className="flex-1 overflow-auto bg-white relative" 
       style={{ 
         zoom: `${zoom}%`,
         scrollBehavior: 'smooth',
-        willChange: 'scroll-position'
+        willChange: 'scroll-position',
+        height: '100%',
+        maxHeight: 'calc(100vh - 200px)'
       }}
       onMouseMove={handleResizeMove}
       onMouseUp={handleResizeEnd}
       onMouseLeave={handleResizeEnd}
     >
-      <div className="relative" style={{ minWidth: getColumnPosition(27), minHeight: getRowPosition(101) }}>
+      <div 
+        className="relative" 
+        style={{ 
+          width: Math.max(getColumnPosition(27), 2000), // Ensure minimum width
+          height: Math.max(getRowPosition(101), 2100), // Ensure minimum height
+          minWidth: getColumnPosition(27), 
+          minHeight: getRowPosition(101)
+        }}
+      >
         {/* Top-left corner */}
         <div 
           className="absolute bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center"

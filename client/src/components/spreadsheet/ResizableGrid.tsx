@@ -549,6 +549,66 @@ export function ResizableGrid({
           );
         })}
       </div>
+      
+      {/* Manual Resize Dialog */}
+      <Dialog open={!!showManualResize} onOpenChange={() => setShowManualResize(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Resize {showManualResize?.type === 'column' ? 'Column' : 'Row'} {
+                showManualResize?.type === 'column' 
+                  ? getColumnLetter(showManualResize.index)
+                  : showManualResize?.index
+              }
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="manual-size">
+                {showManualResize?.type === 'column' ? 'Width' : 'Height'} (pixels)
+              </Label>
+              <Input
+                id="manual-size"
+                type="number"
+                value={manualSize}
+                onChange={(e) => setManualSize(e.target.value)}
+                placeholder="Enter size in pixels"
+                min={10}
+                max={1000}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button onClick={handleManualResize} className="flex-1">
+                Apply Size
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleDoubleClickResize(
+                  showManualResize?.type || 'column', 
+                  showManualResize?.index || 1
+                )}
+              >
+                Auto-fit
+              </Button>
+            </div>
+            
+            {(selectedColumns.length > 1 && showManualResize?.type === 'column') || 
+             (selectedRows.length > 1 && showManualResize?.type === 'row') ? (
+              <div className="pt-2 border-t">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => handleUniformSize(showManualResize?.type || 'column')}
+                >
+                  Apply to All Selected ({
+                    showManualResize?.type === 'column' ? selectedColumns.length : selectedRows.length
+                  } {showManualResize?.type}s)
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

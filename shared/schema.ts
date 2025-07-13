@@ -53,6 +53,30 @@ export const cells = pgTable("cells", {
     backgroundColor?: string;
     textAlign?: "left" | "center" | "right";
     verticalAlign?: "top" | "middle" | "bottom";
+    // Enhanced conditional formatting
+    conditionalFormatting?: {
+      type: "color_scale" | "data_bars" | "icon_sets" | "cell_value" | "text_contains";
+      condition?: "greater_than" | "less_than" | "equal_to" | "between" | "not_empty";
+      value?: string | number;
+      value2?: string | number; // for between conditions
+      colorScale?: { min: string; mid?: string; max: string };
+      iconSet?: "arrows" | "traffic_lights" | "stars" | "flags";
+      dataBarColor?: string;
+    }[];
+  }>(),
+  // Data validation rules
+  validation: jsonb("validation").$type<{
+    type: "list" | "number" | "text" | "date" | "checkbox" | "custom";
+    listItems?: string[];
+    numberMin?: number;
+    numberMax?: number;
+    textLength?: { min?: number; max?: number };
+    dateRange?: { start?: string; end?: string };
+    customFormula?: string;
+    showDropdown?: boolean;
+    showWarning?: boolean;
+    customMessage?: string;
+    allowBlank?: boolean;
   }>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

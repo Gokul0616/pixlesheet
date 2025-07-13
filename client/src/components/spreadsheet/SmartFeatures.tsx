@@ -27,35 +27,147 @@ export function SmartFeatures({ onAction }: SmartFeaturesProps) {
   const [smartSuggestions, setSmartSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Smart Fill suggestions
+  // Enhanced Smart Fill with better pattern detection
   const handleSmartFill = () => {
     const suggestions = [
-      { type: 'pattern', description: 'Fill series: 1, 2, 3, 4, 5...', confidence: 95 },
-      { type: 'date', description: 'Fill dates: Jan 1, Jan 2, Jan 3...', confidence: 90 },
-      { type: 'formula', description: 'Copy formula with relative references', confidence: 85 }
+      { 
+        type: 'number_series', 
+        description: 'Number series: 1, 2, 3, 4, 5...', 
+        confidence: 95,
+        pattern: 'arithmetic',
+        increment: 1
+      },
+      { 
+        type: 'date_series', 
+        description: 'Date series: Jan 1, Jan 2, Jan 3...', 
+        confidence: 90,
+        pattern: 'date',
+        unit: 'day'
+      },
+      { 
+        type: 'weekday_series', 
+        description: 'Weekday series: Mon, Tue, Wed...', 
+        confidence: 88,
+        pattern: 'weekday'
+      },
+      { 
+        type: 'month_series', 
+        description: 'Month series: Jan, Feb, Mar...', 
+        confidence: 85,
+        pattern: 'month'
+      },
+      { 
+        type: 'geometric_series', 
+        description: 'Geometric series: 2, 4, 8, 16...', 
+        confidence: 80,
+        pattern: 'geometric',
+        multiplier: 2
+      },
+      { 
+        type: 'formula_pattern', 
+        description: 'Copy formula with relative references', 
+        confidence: 92,
+        pattern: 'formula'
+      },
+      { 
+        type: 'text_pattern', 
+        description: 'Text pattern: Item 1, Item 2, Item 3...', 
+        confidence: 75,
+        pattern: 'text_increment'
+      }
     ];
     setSmartSuggestions(suggestions);
     setShowSuggestions(true);
   };
 
-  // AI-powered formula suggestions
+  // AI-powered formula suggestions with more comprehensive options
   const handleFormulaSuggestions = () => {
     onAction('formulaSuggestions', {
       suggestions: [
-        { formula: '=SUM(A1:A10)', description: 'Calculate total of column A' },
-        { formula: '=AVERAGE(B1:B10)', description: 'Calculate average of column B' },
-        { formula: '=IF(C1>100,"High","Low")', description: 'Conditional value based on C1' }
+        { 
+          formula: '=SUM(A1:A10)', 
+          description: 'Calculate total of column A',
+          category: 'Statistical',
+          useCase: 'Sum all values in a range'
+        },
+        { 
+          formula: '=AVERAGE(B1:B10)', 
+          description: 'Calculate average of column B',
+          category: 'Statistical',
+          useCase: 'Find mean value'
+        },
+        { 
+          formula: '=IF(C1>100,"High","Low")', 
+          description: 'Conditional value based on C1',
+          category: 'Logical',
+          useCase: 'Categorize values'
+        },
+        { 
+          formula: '=VLOOKUP(E1,A:B,2,FALSE)', 
+          description: 'Lookup value from table',
+          category: 'Lookup',
+          useCase: 'Find related data'
+        },
+        { 
+          formula: '=COUNTIF(A:A,">100")', 
+          description: 'Count cells meeting criteria',
+          category: 'Statistical',
+          useCase: 'Count with conditions'
+        },
+        { 
+          formula: '=CONCATENATE(A1," ",B1)', 
+          description: 'Combine text from multiple cells',
+          category: 'Text',
+          useCase: 'Merge text values'
+        }
       ]
     });
   };
 
-  // Data insights
+  // Enhanced data insights with trend analysis
   const handleDataInsights = () => {
     onAction('dataInsights', {
       insights: [
-        { type: 'trend', title: 'Increasing Trend', description: 'Revenue shows 15% growth over last quarter' },
-        { type: 'outlier', title: 'Outlier Detected', description: 'Value in B15 is 3x higher than average' },
-        { type: 'correlation', title: 'Strong Correlation', description: 'Sales and Marketing spend are 85% correlated' }
+        { 
+          type: 'trend', 
+          title: 'Increasing Trend Detected', 
+          description: 'Revenue shows 15% growth over last quarter',
+          confidence: 92,
+          recommendation: 'Consider increasing marketing budget',
+          chart: 'line'
+        },
+        { 
+          type: 'outlier', 
+          title: 'Outlier Value Found', 
+          description: 'Value in B15 is 3x higher than average',
+          confidence: 88,
+          recommendation: 'Verify data accuracy',
+          location: 'B15'
+        },
+        { 
+          type: 'correlation', 
+          title: 'Strong Correlation', 
+          description: 'Sales and Marketing spend are 85% correlated',
+          confidence: 85,
+          recommendation: 'Optimize marketing allocation',
+          correlation: 0.85
+        },
+        { 
+          type: 'seasonality', 
+          title: 'Seasonal Pattern', 
+          description: 'Q4 consistently shows 30% higher sales',
+          confidence: 90,
+          recommendation: 'Prepare inventory for Q4',
+          pattern: 'quarterly'
+        },
+        { 
+          type: 'missing_data', 
+          title: 'Missing Data Points', 
+          description: '12% of cells in range A1:C100 are empty',
+          confidence: 100,
+          recommendation: 'Complete data collection',
+          percentage: 12
+        }
       ]
     });
   };

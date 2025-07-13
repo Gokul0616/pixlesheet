@@ -1,0 +1,331 @@
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+
+interface ResizableGridProps {
+  sheetId: number;
+  selectedCell: { row: number; column: number; sheetId: number } | null;
+  isEditing: boolean;
+  setIsEditing: (editing: boolean) => void;
+  formulaValue: string;
+  setFormulaValue: (value: string) => void;
+  onCellUpdate: (row: number, column: number, value: string, formula?: string) => void;
+  realtimeUpdates: any[];
+  gridLinesVisible: boolean;
+  zoom: number;
+  onCellSelect?: (row: number, column: number) => void;
+}
+
+interface ColumnWidth {
+  [key: number]: number;
+}
+
+interface RowHeight {
+  [key: number]: number;
+}
+
+export function ResizableGrid({
+  sheetId,
+  selectedCell,
+  isEditing,
+  setIsEditing,
+  formulaValue,
+  setFormulaValue,
+  onCellUpdate,
+  realtimeUpdates,
+  gridLinesVisible,
+  zoom,
+  onCellSelect
+}: ResizableGridProps) {
+  const [columnWidths, setColumnWidths] = useState<ColumnWidth>({});
+  const [rowHeights, setRowHeights] = useState<RowHeight>({});
+  const [isResizing, setIsResizing] = useState<{ type: 'column' | 'row'; index: number } | null>(null);
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const { data: cells } = useQuery({
+    queryKey: ["/api/sheets", sheetId, "cells"],
+    enabled: !!sheetId,
+  });
+
+  const defaultColumnWidth = 100;
+  const defaultRowHeight = 21;
+  const headerHeight = 24;
+  const headerWidth = 40;
+
+  const getColumnWidth = (col: number) => columnWidths[col] || defaultColumnWidth;
+  const getRowHeight = (row: number) => rowHeights[row] || defaultRowHeight;
+
+  const getCellValue = (row: number, column: number) => {
+    const cell = cells?.find(c => c.row === row && c.column === column);
+    if (!cell) return "";
+    
+    // Use calculated_value for formulas, otherwise use value
+    if (cell.dataType === 'formula' && 'calculated_value' in cell) {
+      return String(cell.calculated_value);
+    }
+    
+    return cell.value || "";
+  };
+
+  const getCellDisplayValue = (row: number, column: number) => {
+    const cell = cells?.find(c => c.row === row && c.column === column);
+    if (!cell) return "";
+    
+    // For editing, always show the original formula or value
+    if (cell.dataType === 'formula' && cell.formula) {
+      return cell.formula;
+    }
+    
+    return cell.value || "";
+  };
+
+  const handleCellClick = (row: number, column: number) => {
+    setIsEditing(false);
+    onCellSelect?.(row, column);
+  };
+
+  const handleCellDoubleClick = (row: number, column: number) => {
+    setIsEditing(true);
+    setFormulaValue(getCellDisplayValue(row, column));
+  };
+
+  const handleCellChange = (row: number, column: number, value: string) => {
+    onCellUpdate(row, column, value);
+    setIsEditing(false);
+  };
+
+  const getColumnLetter = (col: number) => {
+    let result = "";
+    while (col > 0) {
+      col--;
+      result = String.fromCharCode(65 + (col % 26)) + result;
+      col = Math.floor(col / 26);
+    }
+    return result;
+  };
+
+  const handleResizeStart = (e: React.MouseEvent, type: 'column' | 'row', index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing({ type, index });
+    setResizeStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleResizeMove = (e: React.MouseEvent) => {
+    if (!isResizing) return;
+
+    const deltaX = e.clientX - resizeStart.x;
+    const deltaY = e.clientY - resizeStart.y;
+
+    if (isResizing.type === 'column') {
+      const currentWidth = getColumnWidth(isResizing.index);
+      const newWidth = Math.max(50, currentWidth + deltaX);
+      setColumnWidths(prev => ({
+        ...prev,
+        [isResizing.index]: newWidth
+      }));
+    } else {
+      const currentHeight = getRowHeight(isResizing.index);
+      const newHeight = Math.max(15, currentHeight + deltaY);
+      setRowHeights(prev => ({
+        ...prev,
+        [isResizing.index]: newHeight
+      }));
+    }
+
+    setResizeStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleResizeEnd = () => {
+    setIsResizing(null);
+  };
+
+  const handleDoubleClickResize = (type: 'column' | 'row', index: number) => {
+    if (type === 'column') {
+      // Auto-fit column width based on content
+      let maxWidth = 60;
+      for (let row = 1; row <= 50; row++) {
+        const value = getCellValue(row, index);
+        const textWidth = value.length * 8 + 16; // Rough calculation
+        maxWidth = Math.max(maxWidth, textWidth);
+      }
+      setColumnWidths(prev => ({
+        ...prev,
+        [index]: Math.min(maxWidth, 300)
+      }));
+    }
+  };
+
+  // Calculate cumulative positions for efficient rendering
+  const getColumnPosition = (col: number) => {
+    let position = headerWidth;
+    for (let i = 1; i < col; i++) {
+      position += getColumnWidth(i);
+    }
+    return position;
+  };
+
+  const getRowPosition = (row: number) => {
+    let position = headerHeight;
+    for (let i = 1; i < row; i++) {
+      position += getRowHeight(i);
+    }
+    return position;
+  };
+
+  return (
+    <div 
+      ref={gridRef}
+      className="flex-1 overflow-auto bg-white relative" 
+      style={{ zoom: `${zoom}%` }}
+      onMouseMove={handleResizeMove}
+      onMouseUp={handleResizeEnd}
+      onMouseLeave={handleResizeEnd}
+    >
+      <div className="relative" style={{ minWidth: getColumnPosition(27), minHeight: getRowPosition(51) }}>
+        {/* Top-left corner */}
+        <div 
+          className="absolute bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center"
+          style={{
+            left: 0,
+            top: 0,
+            width: headerWidth,
+            height: headerHeight
+          }}
+        />
+        
+        {/* Column headers */}
+        {Array.from({ length: 26 }, (_, col) => {
+          const colIndex = col + 1;
+          const left = getColumnPosition(colIndex);
+          const width = getColumnWidth(colIndex);
+          
+          return (
+            <div key={`col-header-${col}`}>
+              {/* Column header */}
+              <div
+                className="absolute bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-200"
+                style={{
+                  left,
+                  top: 0,
+                  width,
+                  height: headerHeight
+                }}
+                onClick={() => {
+                  // Select entire column
+                  console.log(`Select column ${getColumnLetter(colIndex)}`);
+                }}
+              >
+                {getColumnLetter(colIndex)}
+              </div>
+              
+              {/* Column resize handle */}
+              <div
+                className="absolute bg-transparent hover:bg-blue-500 cursor-col-resize z-10"
+                style={{
+                  left: left + width - 2,
+                  top: 0,
+                  width: 4,
+                  height: headerHeight
+                }}
+                onMouseDown={(e) => handleResizeStart(e, 'column', colIndex)}
+                onDoubleClick={() => handleDoubleClickResize('column', colIndex)}
+              />
+            </div>
+          );
+        })}
+
+        {/* Row headers and cells */}
+        {Array.from({ length: 50 }, (_, row) => {
+          const rowIndex = row + 1;
+          const top = getRowPosition(rowIndex);
+          const height = getRowHeight(rowIndex);
+          
+          return (
+            <div key={`row-${row}`}>
+              {/* Row header */}
+              <div
+                className="absolute bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-200"
+                style={{
+                  left: 0,
+                  top,
+                  width: headerWidth,
+                  height
+                }}
+                onClick={() => {
+                  // Select entire row
+                  console.log(`Select row ${rowIndex}`);
+                }}
+              >
+                {rowIndex}
+              </div>
+              
+              {/* Row resize handle */}
+              <div
+                className="absolute bg-transparent hover:bg-blue-500 cursor-row-resize z-10"
+                style={{
+                  left: 0,
+                  top: top + height - 2,
+                  width: headerWidth,
+                  height: 4
+                }}
+                onMouseDown={(e) => handleResizeStart(e, 'row', rowIndex)}
+              />
+              
+              {/* Cells in this row */}
+              {Array.from({ length: 26 }, (_, col) => {
+                const colIndex = col + 1;
+                const left = getColumnPosition(colIndex);
+                const width = getColumnWidth(colIndex);
+                const cellValue = getCellValue(rowIndex, colIndex);
+                const isSelected = selectedCell?.row === rowIndex && selectedCell?.column === colIndex;
+                const isEditingCell = isSelected && isEditing;
+                
+                return (
+                  <div
+                    key={`cell-${row}-${col}`}
+                    className={`
+                      absolute border-r border-b font-mono text-sm p-1 cursor-cell flex items-center
+                      ${gridLinesVisible ? 'border-gray-200' : 'border-transparent'}
+                      ${isSelected ? 'bg-blue-50 border-blue-500 border-2 z-20' : 'hover:bg-gray-50'}
+                      ${isEditingCell ? 'bg-white border-blue-500 border-2 z-30' : ''}
+                    `}
+                    style={{
+                      left,
+                      top,
+                      width,
+                      height
+                    }}
+                    onClick={() => handleCellClick(rowIndex, colIndex)}
+                    onDoubleClick={() => handleCellDoubleClick(rowIndex, colIndex)}
+                  >
+                    {isEditingCell ? (
+                      <input
+                        type="text"
+                        value={formulaValue}
+                        onChange={(e) => setFormulaValue(e.target.value)}
+                        onBlur={() => handleCellChange(rowIndex, colIndex, formulaValue)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleCellChange(rowIndex, colIndex, formulaValue);
+                          }
+                          if (e.key === 'Escape') {
+                            setIsEditing(false);
+                          }
+                        }}
+                        className="w-full h-full bg-transparent border-none outline-none"
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="block truncate w-full">{cellValue}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

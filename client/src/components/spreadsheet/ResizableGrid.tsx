@@ -199,6 +199,22 @@ export function ResizableGrid({
   };
 
   const handleResizeEnd = () => {
+    if (isResizing) {
+      // Save to backend
+      if (isResizing.type === 'column') {
+        const width = getColumnWidth(isResizing.index);
+        updateColumnMutation.mutate({
+          columnIndex: isResizing.index,
+          updates: { width }
+        });
+      } else {
+        const height = getRowHeight(isResizing.index);
+        updateRowMutation.mutate({
+          rowIndex: isResizing.index,
+          updates: { height }
+        });
+      }
+    }
     setIsResizing(null);
   };
 
@@ -211,10 +227,140 @@ export function ResizableGrid({
         const textWidth = value.length * 8 + 16; // Rough calculation
         maxWidth = Math.max(maxWidth, textWidth);
       }
+      const autoWidth = Math.min(maxWidth, 300);
       setColumnWidths(prev => ({
         ...prev,
-        [index]: Math.min(maxWidth, 300)
+        [index]: autoWidth
       }));
+      
+      // Save to backend
+      updateColumnMutation.mutate({
+        columnIndex: index,
+        updates: { width: autoWidth, autoFit: true }
+      });
+      
+      toast({
+        title: "Auto-fit Applied",
+        description: `Column ${getColumnLetter(index)} resized to fit content`,
+      });
+    } else {
+      // Auto-fit row height
+      const autoHeight = 21; // For now, keep default
+      setRowHeights(prev => ({
+        ...prev,
+        [index]: autoHeight
+      }));
+      
+      updateRowMutation.mutate({
+        rowIndex: index,
+        updates: { height: autoHeight, autoFit: true }
+      });
+    }
+  };
+
+  // Manual resize dialog
+  const handleManualResize = () => {
+    if (!showManualResize) return;
+    
+    const size = parseInt(manualSize);
+    if (isNaN(size) || size < 10) {
+      toast({
+        title: "Invalid Size",
+        description: "Please enter a valid size (minimum 10)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (showManualResize.type === 'column') {
+      setColumnWidths(prev => ({
+        ...prev,
+        [showManualResize.index]: size
+      }));
+      updateColumnMutation.mutate({
+        columnIndex: showManualResize.index,
+        updates: { width: size }
+      });
+    } else {
+      setRowHeights(prev => ({
+        ...prev,
+        [showManualResize.index]: size
+      }));
+      updateRowMutation.mutate({
+        rowIndex: showManualResize.index,
+        updates: { height: size }
+      });
+    }
+
+    setShowManualResize(null);
+    setManualSize('');
+    toast({
+      title: "Size Updated",
+      description: `${showManualResize.type === 'column' ? 'Column' : 'Row'} resized to ${size}px`,
+    });
+  };
+
+  // Uniform sizing for selected columns/rows
+  const handleUniformSize = (type: 'column' | 'row') => {
+    const size = type === 'column' ? defaultColumnWidth : defaultRowHeight;
+    const selected = type === 'column' ? selectedColumns : selectedRows;
+    
+    selected.forEach(index => {
+      if (type === 'column') {
+        setColumnWidths(prev => ({ ...prev, [index]: size }));
+        updateColumnMutation.mutate({
+          columnIndex: index,
+          updates: { width: size }
+        });
+      } else {
+        setRowHeights(prev => ({ ...prev, [index]: size }));
+        updateRowMutation.mutate({
+          rowIndex: index,
+          updates: { height: size }
+        });
+      }
+    });
+
+    toast({
+      title: "Uniform Size Applied",
+      description: `${selected.length} ${type}s resized uniformly`,
+    });
+  };
+
+  // Column/Row selection handlers
+  const handleColumnHeaderClick = (col: number, ctrlKey: boolean, shiftKey: boolean) => {
+    if (shiftKey && selectedColumns.length > 0) {
+      // Range selection
+      const start = Math.min(...selectedColumns);
+      const end = Math.max(col, start);
+      const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+      setSelectedColumns(range);
+    } else if (ctrlKey) {
+      // Multi-selection
+      setSelectedColumns(prev => 
+        prev.includes(col) ? prev.filter(c => c !== col) : [...prev, col]
+      );
+    } else {
+      // Single selection
+      setSelectedColumns([col]);
+    }
+  };
+
+  const handleRowHeaderClick = (row: number, ctrlKey: boolean, shiftKey: boolean) => {
+    if (shiftKey && selectedRows.length > 0) {
+      // Range selection
+      const start = Math.min(...selectedRows);
+      const end = Math.max(row, start);
+      const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+      setSelectedRows(range);
+    } else if (ctrlKey) {
+      // Multi-selection
+      setSelectedRows(prev => 
+        prev.includes(row) ? prev.filter(r => r !== row) : [...prev, row]
+      );
+    } else {
+      // Single selection
+      setSelectedRows([row]);
     }
   };
 

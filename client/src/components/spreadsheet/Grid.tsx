@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ContextMenu } from "./ContextMenu";
+import { CollaborationIndicator } from "./CollaborationIndicator";
 
 interface GridProps {
   sheetId: number;
@@ -41,11 +42,16 @@ export function Grid({
   const [isDragging, setIsDragging] = useState(false);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [isFillMode, setIsFillMode] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(100);
+  const [columnWidths, setColumnWidths] = useState<Record<number, number>>({});
+  const [isResizing, setIsResizing] = useState<{ column: number; startX: number; startWidth: number } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
 
   const ROWS = 100;
   const COLUMNS = 26;
+  const BASE_COLUMN_WIDTH = 120;
+  const BASE_ROW_HEIGHT = 32;
 
   // Fetch cells data
   const { data: cells } = useQuery({
@@ -276,6 +282,68 @@ export function Grid({
     });
   };
 
+  // Handle zoom changes
+  useEffect(() => {
+    const handleZoomChange = (event: CustomEvent) => {
+      setCurrentZoom(event.detail.zoom);
+    };
+    
+    window.addEventListener('zoomChange', handleZoomChange as EventListener);
+    return () => window.removeEventListener('zoomChange', handleZoomChange as EventListener);
+  }, []);
+
+  // Get column width with zoom
+  const getColumnWidth = (column: number) => {
+    const baseWidth = columnWidths[column] || BASE_COLUMN_WIDTH;
+    return Math.round(baseWidth * (currentZoom / 100));
+  };
+
+  // Get row height with zoom
+  const getRowHeight = () => {
+    return Math.round(BASE_ROW_HEIGHT * (currentZoom / 100));
+  };
+
+  // Handle column resizing
+  const handleColumnResize = (column: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const startX = event.clientX;
+    const startWidth = getColumnWidth(column);
+    
+    setIsResizing({ column, startX, startWidth });
+  };
+
+  // Handle mouse move during resize
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isResizing) {
+        const deltaX = event.clientX - isResizing.startX;
+        const newWidth = Math.max(50, isResizing.startWidth + deltaX);
+        const actualWidth = Math.round(newWidth / (currentZoom / 100));
+        
+        setColumnWidths(prev => ({
+          ...prev,
+          [isResizing.column]: actualWidth
+        }));
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(null);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, currentZoom]);
+
   // Handle keyboard events
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -393,18 +461,37 @@ export function Grid({
     <div 
       ref={gridRef} 
       className="relative overflow-auto h-full bg-white spreadsheet-grid spreadsheet-scroll"
-      onSelectStart={(e) => e.preventDefault()}
-      onDragStart={(e) => e.preventDefault()}
+      onMouseDown={(e) => {
+        // Prevent text selection during grid operations
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+        }
+      }}
     >
-      <div className="grid grid-cols-[40px_repeat(26,_120px)] gap-0">
+      <div 
+        className="grid gap-0"
+        style={{ 
+          gridTemplateColumns: `40px ${Array.from({ length: COLUMNS }, (_, i) => `${getColumnWidth(i + 1)}px`).join(' ')}`,
+          fontSize: `${currentZoom}%`
+        }}
+      >
         {/* Header row */}
-        <div className="sticky top-0 bg-gray-100 border-r border-b border-gray-300 h-8 flex items-center justify-center text-xs font-medium z-10"></div>
+        <div 
+          className="sticky top-0 bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium z-10"
+          style={{ height: `${getRowHeight()}px` }}
+        ></div>
         {Array.from({ length: COLUMNS }, (_, i) => (
           <div
             key={`header-${i + 1}`}
-            className="sticky top-0 bg-gray-100 border-r border-b border-gray-300 h-8 flex items-center justify-center text-xs font-medium z-10"
+            className="sticky top-0 bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium z-10 relative group"
+            style={{ height: `${getRowHeight()}px` }}
           >
             {getColumnLetter(i + 1)}
+            {/* Column resize handle */}
+            <div
+              className="absolute right-0 top-0 w-2 h-full cursor-col-resize hover:bg-blue-200 opacity-0 group-hover:opacity-100 transition-opacity"
+              onMouseDown={(e) => handleColumnResize(i + 1, e)}
+            />
           </div>
         ))}
 
@@ -414,7 +501,10 @@ export function Grid({
           return (
             <div key={`row-${row}`} className="contents">
               {/* Row header */}
-              <div className="sticky left-0 bg-gray-100 border-r border-b border-gray-300 h-8 flex items-center justify-center text-xs font-medium z-10">
+              <div 
+                className="sticky left-0 bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium z-10"
+                style={{ height: `${getRowHeight()}px` }}
+              >
                 {row}
               </div>
               
@@ -430,13 +520,14 @@ export function Grid({
                   <div
                     key={`cell-${row}-${column}`}
                     className={`
-                      relative h-8 border-r border-b border-gray-200 cursor-cell cell-transition
+                      relative border-r border-b border-gray-200 cursor-cell cell-transition
                       ${isSelected ? 'bg-blue-100' : 'bg-white hover:bg-gray-50'}
                       ${isActive ? 'ring-2 ring-blue-500 ring-inset' : ''}
                       ${gridLinesVisible ? '' : 'border-transparent'}
                       ${isDragging && isSelected ? 'bg-blue-200' : ''}
                       ${isCurrentlyEditing ? 'cell-editing' : ''}
                     `}
+                    style={{ height: `${getRowHeight()}px` }}
                     onClick={(e) => handleCellClick(row, column, e)}
                     onDoubleClick={() => handleCellDoubleClick(row, column)}
                     onMouseDown={(e) => handleMouseDown(row, column, e)}
@@ -489,6 +580,12 @@ export function Grid({
         onClose={() => setContextMenu(null)}
         onAction={onAction}
         selectedCells={selectedCells}
+      />
+
+      {/* Collaboration Indicator */}
+      <CollaborationIndicator
+        spreadsheetId={sheetId}
+        currentUserId="user1"
       />
     </div>
   );

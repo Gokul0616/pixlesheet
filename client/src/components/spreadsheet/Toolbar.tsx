@@ -42,7 +42,10 @@ export function Toolbar() {
 
         {/* Zoom */}
         <div className="flex items-center space-x-2">
-          <Select defaultValue="100">
+          <Select defaultValue="100" onValueChange={(value) => {
+            const event = new CustomEvent('zoomChange', { detail: { zoom: parseInt(value) } });
+            window.dispatchEvent(event);
+          }}>
             <SelectTrigger className="w-20 h-8">
               <SelectValue />
             </SelectTrigger>
@@ -52,6 +55,7 @@ export function Toolbar() {
               <SelectItem value="100">100%</SelectItem>
               <SelectItem value="125">125%</SelectItem>
               <SelectItem value="150">150%</SelectItem>
+              <SelectItem value="200">200%</SelectItem>
             </SelectContent>
           </Select>
         </div>

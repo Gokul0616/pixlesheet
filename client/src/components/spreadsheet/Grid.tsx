@@ -62,7 +62,7 @@ export function Grid({
 
   const handleCellDoubleClick = (row: number, column: number) => {
     setIsEditing(true);
-    setFormulaValue(getCellValue(row, column));
+    setFormulaValue(getCellDisplayValue(row, column));
   };
 
   const handleCellChange = (row: number, column: number, value: string) => {

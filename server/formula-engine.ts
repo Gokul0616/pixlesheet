@@ -17,28 +17,95 @@ export class FormulaEngine {
 
   constructor() {
     this.functions = new Map([
+      // Statistical Functions
       ['SUM', this.sum.bind(this)],
       ['AVERAGE', this.average.bind(this)],
       ['AVG', this.average.bind(this)],
       ['COUNT', this.count.bind(this)],
+      ['COUNTA', this.countA.bind(this)],
+      ['COUNTIF', this.countIf.bind(this)],
+      ['SUMIF', this.sumIf.bind(this)],
+      ['AVERAGEIF', this.averageIf.bind(this)],
       ['MAX', this.max.bind(this)],
       ['MIN', this.min.bind(this)],
+      ['MEDIAN', this.median.bind(this)],
+      ['MODE', this.mode.bind(this)],
+      ['STDEV', this.stdev.bind(this)],
+      ['VAR', this.variance.bind(this)],
+      
+      // Math Functions
       ['ABS', this.abs.bind(this)],
       ['ROUND', this.round.bind(this)],
+      ['ROUNDUP', this.roundUp.bind(this)],
+      ['ROUNDDOWN', this.roundDown.bind(this)],
+      ['CEIL', this.ceil.bind(this)],
+      ['FLOOR', this.floor.bind(this)],
       ['SQRT', this.sqrt.bind(this)],
       ['POWER', this.power.bind(this)],
       ['POW', this.power.bind(this)],
+      ['EXP', this.exp.bind(this)],
+      ['LN', this.ln.bind(this)],
+      ['LOG', this.log.bind(this)],
+      ['LOG10', this.log10.bind(this)],
+      ['SIN', this.sin.bind(this)],
+      ['COS', this.cos.bind(this)],
+      ['TAN', this.tan.bind(this)],
+      ['PI', this.pi.bind(this)],
+      ['RAND', this.rand.bind(this)],
+      ['RANDBETWEEN', this.randBetween.bind(this)],
+      
+      // Logic Functions
       ['IF', this.if.bind(this)],
+      ['IFS', this.ifs.bind(this)],
+      ['AND', this.and.bind(this)],
+      ['OR', this.or.bind(this)],
+      ['NOT', this.not.bind(this)],
+      ['TRUE', this.true.bind(this)],
+      ['FALSE', this.false.bind(this)],
+      
+      // Text Functions
       ['CONCATENATE', this.concatenate.bind(this)],
       ['CONCAT', this.concatenate.bind(this)],
       ['LEN', this.len.bind(this)],
       ['UPPER', this.upper.bind(this)],
       ['LOWER', this.lower.bind(this)],
+      ['PROPER', this.proper.bind(this)],
       ['LEFT', this.left.bind(this)],
       ['RIGHT', this.right.bind(this)],
       ['MID', this.mid.bind(this)],
+      ['TRIM', this.trim.bind(this)],
+      ['SUBSTITUTE', this.substitute.bind(this)],
+      ['REPLACE', this.replace.bind(this)],
+      ['FIND', this.find.bind(this)],
+      ['SEARCH', this.search.bind(this)],
+      
+      // Date/Time Functions
       ['TODAY', this.today.bind(this)],
       ['NOW', this.now.bind(this)],
+      ['DATE', this.date.bind(this)],
+      ['TIME', this.time.bind(this)],
+      ['YEAR', this.year.bind(this)],
+      ['MONTH', this.month.bind(this)],
+      ['DAY', this.day.bind(this)],
+      ['HOUR', this.hour.bind(this)],
+      ['MINUTE', this.minute.bind(this)],
+      ['SECOND', this.second.bind(this)],
+      ['WEEKDAY', this.weekday.bind(this)],
+      ['DATEDIF', this.dateDif.bind(this)],
+      
+      // Lookup Functions
+      ['VLOOKUP', this.vlookup.bind(this)],
+      ['HLOOKUP', this.hlookup.bind(this)],
+      ['INDEX', this.index.bind(this)],
+      ['MATCH', this.match.bind(this)],
+      
+      // Financial Functions
+      ['PMT', this.pmt.bind(this)],
+      ['PV', this.pv.bind(this)],
+      ['FV', this.fv.bind(this)],
+      ['RATE', this.rate.bind(this)],
+      ['NPV', this.npv.bind(this)],
+      ['IRR', this.irr.bind(this)],
     ]);
   }
 

@@ -199,6 +199,30 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
 });
 
+export const insertColumnMetadataSchema = createInsertSchema(columnMetadata).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRowMetadataSchema = createInsertSchema(rowMetadata).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPivotTableSchema = createInsertSchema(pivotTables).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNamedRangeSchema = createInsertSchema(namedRanges).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type Spreadsheet = typeof spreadsheets.$inferSelect;
 export type Sheet = typeof sheets.$inferSelect;
@@ -206,6 +230,10 @@ export type Cell = typeof cells.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Collaborator = typeof collaborators.$inferSelect;
 export type Activity = typeof activities.$inferSelect;
+export type ColumnMetadata = typeof columnMetadata.$inferSelect;
+export type RowMetadata = typeof rowMetadata.$inferSelect;
+export type PivotTable = typeof pivotTables.$inferSelect;
+export type NamedRange = typeof namedRanges.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSpreadsheet = z.infer<typeof insertSpreadsheetSchema>;
@@ -214,3 +242,7 @@ export type InsertCell = z.infer<typeof insertCellSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertCollaborator = z.infer<typeof insertCollaboratorSchema>;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
+export type InsertColumnMetadata = z.infer<typeof insertColumnMetadataSchema>;
+export type InsertRowMetadata = z.infer<typeof insertRowMetadataSchema>;
+export type InsertPivotTable = z.infer<typeof insertPivotTableSchema>;
+export type InsertNamedRange = z.infer<typeof insertNamedRangeSchema>;

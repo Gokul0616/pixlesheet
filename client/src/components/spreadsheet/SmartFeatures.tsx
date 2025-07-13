@@ -443,7 +443,7 @@ function ExportOptionsDialog({ onAction }: { onAction: (action: string, data?: a
                 <Checkbox
                   id="include-formatting"
                   checked={includeFormatting}
-                  onCheckedChange={setIncludeFormatting}
+                  onCheckedChange={(checked) => setIncludeFormatting(checked === true)}
                 />
                 <Label htmlFor="include-formatting">Include cell formatting</Label>
               </div>
@@ -452,7 +452,7 @@ function ExportOptionsDialog({ onAction }: { onAction: (action: string, data?: a
                 <Checkbox
                   id="include-formulas"
                   checked={includeFormulas}
-                  onCheckedChange={setIncludeFormulas}
+                  onCheckedChange={(checked) => setIncludeFormulas(checked === true)}
                 />
                 <Label htmlFor="include-formulas">Include formulas</Label>
               </div>

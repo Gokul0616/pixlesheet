@@ -4,6 +4,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Google Sheets-like drag behavior */
+.spreadsheet-grid {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.spreadsheet-grid .cell-editing {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Prevent text selection during drag operations */
+.no-select {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Smooth transitions for cell selection */
+.cell-transition {
+  transition: background-color 0.1s ease;
+}
+
+/* Custom scrollbar for better Google Sheets feel */
+.spreadsheet-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.spreadsheet-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.spreadsheet-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 6px;
+}
+
+.spreadsheet-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(224, 71%, 4%);

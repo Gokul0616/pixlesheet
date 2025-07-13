@@ -89,6 +89,7 @@ export function Grid({
   // Handle single cell click
   const handleCellClick = (row: number, column: number, event: React.MouseEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     setContextMenu(null);
     
     if (isEditing) {
@@ -160,18 +161,32 @@ export function Grid({
   const handleMouseDown = (row: number, column: number, event: React.MouseEvent) => {
     if (event.button !== 0) return; // Only left click
     
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Prevent text selection globally during drag
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
+    
     setIsMouseDown(true);
     setDragStart({ row, column });
+    setIsDragging(true);
     
     // Check if this is a fill operation (dragging from selection corner)
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const isCornerDrag = event.clientX > rect.right - 8 && event.clientY > rect.bottom - 8;
     setIsFillMode(isCornerDrag);
+    
+    // For non-corner drags, start with the clicked cell
+    if (!isCornerDrag) {
+      onCellSelect(row, column);
+      onCellsSelect([{ row, column, sheetId }]);
+    }
   };
 
   // Handle mouse enter during drag
   const handleMouseEnter = (row: number, column: number) => {
-    if (!isMouseDown || !dragStart) return;
+    if (!isMouseDown || !dragStart || !isDragging) return;
     
     setDragEnd({ row, column });
     
@@ -179,8 +194,19 @@ export function Grid({
       // Fill mode: fill from first cell to current
       handleFillOperation(row, column);
     } else {
-      // Selection mode: select range
-      handleRangeSelection(row, column);
+      // Selection mode: select range from drag start to current cell
+      const startRow = Math.min(dragStart.row, row);
+      const endRow = Math.max(dragStart.row, row);
+      const startCol = Math.min(dragStart.column, column);
+      const endCol = Math.max(dragStart.column, column);
+      
+      const rangeCells = [];
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          rangeCells.push({ row: r, column: c, sheetId });
+        }
+      }
+      onCellsSelect(rangeCells);
     }
   };
 
@@ -208,6 +234,10 @@ export function Grid({
 
   // Handle mouse up
   const handleMouseUp = () => {
+    // Restore text selection
+    document.body.style.userSelect = '';
+    document.body.style.webkitUserSelect = '';
+    
     if (isFillMode && dragStart && dragEnd && selectedCells.length > 1) {
       // Apply fill operation
       const sourceValue = getCellValue(dragStart.row, dragStart.column);
@@ -360,7 +390,12 @@ export function Grid({
   }, [selectedCell, selectedCells, isEditing, formulaValue, onCellSelect, onCellsSelect, onCellUpdate, onAction]);
 
   return (
-    <div ref={gridRef} className="relative overflow-auto h-full bg-white">
+    <div 
+      ref={gridRef} 
+      className="relative overflow-auto h-full bg-white spreadsheet-grid spreadsheet-scroll"
+      onSelectStart={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+    >
       <div className="grid grid-cols-[40px_repeat(26,_120px)] gap-0">
         {/* Header row */}
         <div className="sticky top-0 bg-gray-100 border-r border-b border-gray-300 h-8 flex items-center justify-center text-xs font-medium z-10"></div>
@@ -395,16 +430,19 @@ export function Grid({
                   <div
                     key={`cell-${row}-${column}`}
                     className={`
-                      relative h-8 border-r border-b border-gray-200 cursor-cell
+                      relative h-8 border-r border-b border-gray-200 cursor-cell cell-transition
                       ${isSelected ? 'bg-blue-100' : 'bg-white hover:bg-gray-50'}
                       ${isActive ? 'ring-2 ring-blue-500 ring-inset' : ''}
                       ${gridLinesVisible ? '' : 'border-transparent'}
+                      ${isDragging && isSelected ? 'bg-blue-200' : ''}
+                      ${isCurrentlyEditing ? 'cell-editing' : ''}
                     `}
                     onClick={(e) => handleCellClick(row, column, e)}
                     onDoubleClick={() => handleCellDoubleClick(row, column)}
                     onMouseDown={(e) => handleMouseDown(row, column, e)}
                     onMouseEnter={() => handleMouseEnter(row, column)}
                     onContextMenu={(e) => handleRightClick(row, column, e)}
+                    onDragStart={(e) => e.preventDefault()}
                   >
                     {isCurrentlyEditing ? (
                       <input
@@ -416,7 +454,11 @@ export function Grid({
                           setIsEditing(false);
                           onCellUpdate(row, column, formulaValue);
                         }}
-                        className="w-full h-full px-2 bg-white border-2 border-blue-500 outline-none text-sm"
+                        className="w-full h-full px-2 bg-white border-2 border-blue-500 outline-none text-sm cell-editing"
+                        style={{ 
+                          userSelect: 'text',
+                          WebkitUserSelect: 'text'
+                        }}
                         autoFocus
                       />
                     ) : (

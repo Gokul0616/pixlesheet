@@ -296,61 +296,54 @@ export default function SpreadsheetPage() {
     }
   };
 
-  // Handle download functionality  
-  const handleDownload = (format: string) => {
-    // Create sample data for different formats
-    const sampleData = "Revenue,50000,55000\nExpenses,35000,38000\nProfit,15000,17000";
-    
-    switch (format) {
-      case 'csv':
-        const csvBlob = new Blob([sampleData], { type: 'text/csv' });
-        downloadFile(csvBlob, `spreadsheet.csv`);
-        break;
-      case 'xlsx':
-        toast({
-          title: "Excel Export",
-          description: "XLSX export will be implemented with full formatting support",
-        });
-        break;
-      case 'pdf':
-        toast({
-          title: "PDF Export",
-          description: "PDF export will include charts and formatting",
-        });
-        break;
-      case 'json':
-        const jsonData = {
-          sheets: [
-            {
-              name: "Sheet1",
-              data: [
-                ["Revenue", 50000, 55000],
-                ["Expenses", 35000, 38000],
-                ["Profit", 15000, 17000]
-              ]
-            }
-          ]
-        };
-        const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-        downloadFile(jsonBlob, `spreadsheet.json`);
-        break;
-      case 'html':
-        const htmlContent = `
-          <table>
-            <tr><th>Category</th><th>Q1</th><th>Q2</th></tr>
-            <tr><td>Revenue</td><td>50000</td><td>55000</td></tr>
-            <tr><td>Expenses</td><td>35000</td><td>38000</td></tr>
-            <tr><td>Profit</td><td>15000</td><td>17000</td></tr>
-          </table>
-        `;
-        const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
-        downloadFile(htmlBlob, `spreadsheet.html`);
-        break;
-      default:
-        toast({
-          title: "Export Format",
-          description: `${format.toUpperCase()} export will be implemented soon`,
-        });
+  // Enhanced download functionality with new export system
+  const handleDownload = async (format: string, options: any = {}) => {
+    try {
+      toast({
+        title: "Export Started",
+        description: `Preparing ${format.toUpperCase()} export...`,
+      });
+
+      // Get current sheet data
+      const currentSheetId = activeSheet || 1;
+      const response = await fetch(`/api/sheets/${currentSheetId}/cells`);
+      const cellsData = await response.json();
+
+      // Convert to the format expected by the exporter
+      const cells = cellsData.map((cell: any) => ({
+        row: cell.row,
+        column: cell.column,
+        value: cell.value || '',
+        formula: cell.formula,
+        formatting: cell.formatting,
+      }));
+
+      // Use the enhanced export system
+      const blob = await SpreadsheetExporter.exportSpreadsheet(cells, format as any, {
+        sheetName: spreadsheet?.name || 'Ultimate Pixel Sheet',
+        includeFormatting: options.includeFormatting !== false,
+        includeFormulas: options.includeFormulas !== false,
+      });
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${spreadsheet?.name || 'spreadsheet'}.${format}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Complete",
+        description: `${format.toUpperCase()} file downloaded successfully`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: `Failed to export ${format.toUpperCase()} file. Please try again.`,
+        variant: "destructive",
+      });
     }
   };
 

@@ -111,6 +111,11 @@ export class MemStorage implements IStorage {
   private comments: Map<number, Comment> = new Map();
   private collaborators: Map<number, Collaborator> = new Map();
   private activities: Map<number, Activity> = new Map();
+  private columnMetadata: Map<number, ColumnMetadata> = new Map();
+  private rowMetadata: Map<number, RowMetadata> = new Map();
+  private pivotTables: Map<number, PivotTable> = new Map();
+  private namedRanges: Map<number, NamedRange> = new Map();
+  
   private currentUserId = 1;
   private currentSpreadsheetId = 1;
   private currentSheetId = 1;
@@ -118,6 +123,10 @@ export class MemStorage implements IStorage {
   private currentCommentId = 1;
   private currentCollaboratorId = 1;
   private currentActivityId = 1;
+  private currentColumnMetadataId = 1;
+  private currentRowMetadataId = 1;
+  private currentPivotTableId = 1;
+  private currentNamedRangeId = 1;
 
   constructor() {
     // Initialize with sample data

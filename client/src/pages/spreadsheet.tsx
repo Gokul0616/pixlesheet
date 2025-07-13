@@ -1,7 +1,7 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Grid } from "@/components/spreadsheet/Grid";
+import { ResizableGrid } from "@/components/spreadsheet/ResizableGrid";
 import { FormulaBar } from "@/components/spreadsheet/FormulaBar";
 import { FormattingToolbar } from "@/components/spreadsheet/FormattingToolbar";
 import { MenuBar } from "@/components/spreadsheet/MenuBar";
@@ -10,6 +10,7 @@ import { Sidebar } from "@/components/spreadsheet/Sidebar";
 import { ShareDialog } from "@/components/spreadsheet/ShareDialog";
 import { AdvancedFeatures } from "@/components/spreadsheet/AdvancedFeatures";
 import { SmartFeatures } from "@/components/spreadsheet/SmartFeatures";
+import { ChartManager, useChartManager } from "@/components/spreadsheet/ChartManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

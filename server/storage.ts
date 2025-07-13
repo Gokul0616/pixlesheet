@@ -77,6 +77,30 @@ export interface IStorage {
   // Activity methods
   getActivitiesBySpreadsheet(spreadsheetId: number): Promise<Activity[]>;
   createActivity(activity: InsertActivity): Promise<Activity>;
+
+  // Column metadata methods
+  getColumnMetadataBySheet(sheetId: number): Promise<ColumnMetadata[]>;
+  createColumnMetadata(metadata: InsertColumnMetadata): Promise<ColumnMetadata>;
+  updateColumnMetadata(id: number, updates: Partial<ColumnMetadata>): Promise<ColumnMetadata>;
+  updateColumnMetadataByPosition(sheetId: number, columnIndex: number, updates: Partial<ColumnMetadata>): Promise<ColumnMetadata>;
+
+  // Row metadata methods
+  getRowMetadataBySheet(sheetId: number): Promise<RowMetadata[]>;
+  createRowMetadata(metadata: InsertRowMetadata): Promise<RowMetadata>;
+  updateRowMetadata(id: number, updates: Partial<RowMetadata>): Promise<RowMetadata>;
+  updateRowMetadataByPosition(sheetId: number, rowIndex: number, updates: Partial<RowMetadata>): Promise<RowMetadata>;
+
+  // Pivot table methods
+  getPivotTablesBySheet(sheetId: number): Promise<PivotTable[]>;
+  createPivotTable(pivotTable: InsertPivotTable): Promise<PivotTable>;
+  updatePivotTable(id: number, updates: Partial<PivotTable>): Promise<PivotTable>;
+  deletePivotTable(id: number): Promise<void>;
+
+  // Named range methods
+  getNamedRangesBySpreadsheet(spreadsheetId: number): Promise<NamedRange[]>;
+  createNamedRange(namedRange: InsertNamedRange): Promise<NamedRange>;
+  updateNamedRange(id: number, updates: Partial<NamedRange>): Promise<NamedRange>;
+  deleteNamedRange(id: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {

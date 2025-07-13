@@ -395,17 +395,36 @@ function ConditionalFormattingDialog({ onSave }: { onSave: (config: any) => void
   const [condition, setCondition] = useState('cell_value');
   const [operator, setOperator] = useState('greater_than');
   const [value, setValue] = useState('');
+  const [value2, setValue2] = useState('');
   const [formatType, setFormatType] = useState('background_color');
   const [color, setColor] = useState('#ff0000');
+  const [colorScale, setColorScale] = useState({ min: '#ff0000', mid: '#ffff00', max: '#00ff00' });
+  const [iconSet, setIconSet] = useState('arrows');
+  const [dataBarColor, setDataBarColor] = useState('#0066cc');
 
   const handleSave = () => {
-    onSave({
+    const config: any = {
       condition,
       operator,
       value,
       formatType,
       color
-    });
+    };
+
+    // Add type-specific properties
+    if (formatType === 'color_scale') {
+      config.colorScale = colorScale;
+    } else if (formatType === 'icon_sets') {
+      config.iconSet = iconSet;
+    } else if (formatType === 'data_bars') {
+      config.dataBarColor = dataBarColor;
+    }
+
+    if (operator === 'between') {
+      config.value2 = value2;
+    }
+
+    onSave(config);
   };
 
   return (
@@ -451,6 +470,18 @@ function ConditionalFormattingDialog({ onSave }: { onSave: (config: any) => void
         />
       </div>
 
+      {operator === 'between' && (
+        <div>
+          <Label htmlFor="value2">Upper Value</Label>
+          <Input
+            id="value2"
+            value={value2}
+            onChange={(e) => setValue2(e.target.value)}
+            placeholder="Enter upper value"
+          />
+        </div>
+      )}
+
       <div>
         <Label htmlFor="format-type">Format Type</Label>
         <Select value={formatType} onValueChange={setFormatType}>
@@ -467,15 +498,78 @@ function ConditionalFormattingDialog({ onSave }: { onSave: (config: any) => void
         </Select>
       </div>
 
-      <div>
-        <Label htmlFor="color">Color</Label>
-        <Input
-          id="color"
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-        />
-      </div>
+      {formatType === 'background_color' || formatType === 'text_color' ? (
+        <div>
+          <Label htmlFor="color">Color</Label>
+          <Input
+            id="color"
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+          />
+        </div>
+      ) : null}
+
+      {formatType === 'color_scale' && (
+        <div className="space-y-3">
+          <Label>Color Scale</Label>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <Label className="text-xs">Min</Label>
+              <Input
+                type="color"
+                value={colorScale.min}
+                onChange={(e) => setColorScale(prev => ({ ...prev, min: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Mid</Label>
+              <Input
+                type="color"
+                value={colorScale.mid}
+                onChange={(e) => setColorScale(prev => ({ ...prev, mid: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Max</Label>
+              <Input
+                type="color"
+                value={colorScale.max}
+                onChange={(e) => setColorScale(prev => ({ ...prev, max: e.target.value }))}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {formatType === 'icon_sets' && (
+        <div>
+          <Label htmlFor="icon-set">Icon Set</Label>
+          <Select value={iconSet} onValueChange={setIconSet}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="arrows">↑ ↔ ↓ Arrows</SelectItem>
+              <SelectItem value="traffic_lights">🔴 🟡 🟢 Traffic Lights</SelectItem>
+              <SelectItem value="stars">⭐ ⭐⭐ ⭐⭐⭐ Stars</SelectItem>
+              <SelectItem value="flags">🚩 🏁 🏴 Flags</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {formatType === 'data_bars' && (
+        <div>
+          <Label htmlFor="data-bar-color">Data Bar Color</Label>
+          <Input
+            id="data-bar-color"
+            type="color"
+            value={dataBarColor}
+            onChange={(e) => setDataBarColor(e.target.value)}
+          />
+        </div>
+      )}
 
       <Button onClick={handleSave} className="w-full">
         Apply Formatting

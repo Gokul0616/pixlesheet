@@ -1,62 +1,37 @@
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calculator } from "lucide-react";
 
 interface FormulaBarProps {
-  selectedCell: string | null;
+  selectedCell: { row: number; column: number; sheetId: number } | null;
   formulaValue: string;
   setFormulaValue: (value: string) => void;
   isEditing: boolean;
   setIsEditing: (editing: boolean) => void;
 }
 
-export function FormulaBar({
-  selectedCell,
-  formulaValue,
-  setFormulaValue,
-  isEditing,
-  setIsEditing,
-}: FormulaBarProps) {
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormulaValue(event.target.value);
-  };
-
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      setIsEditing(false);
-    } else if (event.key === "Escape") {
-      setIsEditing(false);
-    }
-  };
-
-  const handleFocus = () => {
-    setIsEditing(true);
+export function FormulaBar({ selectedCell, formulaValue, setFormulaValue, isEditing, setIsEditing }: FormulaBarProps) {
+  const getCellReference = () => {
+    if (!selectedCell) return "";
+    const col = String.fromCharCode(64 + selectedCell.column);
+    return `${col}${selectedCell.row}`;
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-2">
+    <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center space-x-4">
       <div className="flex items-center space-x-2">
-        <div className="flex items-center space-x-2">
-          <Input
-            type="text"
-            value={selectedCell || "A1"}
-            className="w-20 h-8 text-sm font-mono"
-            readOnly
-          />
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Calculator className="h-4 w-4" />
-          </Button>
+        <div className="w-16 px-2 py-1 bg-gray-50 border border-gray-200 rounded text-sm font-mono text-center">
+          {getCellReference()}
         </div>
-        <Input
-          type="text"
-          value={formulaValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyPress}
-          onFocus={handleFocus}
-          className="flex-1 h-8 font-mono"
-          placeholder="Enter formula or value"
-        />
+        <span className="text-gray-400">𝑓𝓍</span>
       </div>
+      
+      <Input
+        value={formulaValue}
+        onChange={(e) => setFormulaValue(e.target.value)}
+        onFocus={() => setIsEditing(true)}
+        onBlur={() => setIsEditing(false)}
+        placeholder="Enter formula or value"
+        className="flex-1 font-mono border-0 shadow-none focus-visible:ring-0 px-2"
+      />
     </div>
   );
 }

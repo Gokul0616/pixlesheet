@@ -189,6 +189,87 @@ export default function SpreadsheetPage() {
       case 'numberFormat':
         console.log('Number format:', data);
         break;
+      case 'dataValidation':
+        console.log('Data validation:', data);
+        toast({
+          title: "Data Validation",
+          description: "Validation rules applied successfully",
+        });
+        break;
+      case 'conditionalFormatting':
+        console.log('Conditional formatting:', data);
+        toast({
+          title: "Conditional Formatting",
+          description: "Formatting rules applied successfully",
+        });
+        break;
+      case 'protectedRange':
+        console.log('Protected range:', data);
+        toast({
+          title: "Protected Range",
+          description: "Range protection applied successfully",
+        });
+        break;
+      case 'smartFill':
+        console.log('Smart fill:', data);
+        toast({
+          title: "Smart Fill",
+          description: "Pattern detected and applied automatically",
+        });
+        break;
+      case 'applySmartFill':
+        console.log('Apply smart fill:', data);
+        toast({
+          title: "Smart Fill Applied",
+          description: `${data.description} applied successfully`,
+        });
+        break;
+      case 'formulaSuggestions':
+        console.log('Formula suggestions:', data);
+        toast({
+          title: "Formula Suggestions",
+          description: "AI-powered formula recommendations available",
+        });
+        break;
+      case 'dataInsights':
+        console.log('Data insights:', data);
+        toast({
+          title: "Data Insights",
+          description: "Analytical insights generated for your data",
+        });
+        break;
+      case 'explore':
+        console.log('Explore:', data);
+        toast({
+          title: "Explore Data",
+          description: "Data exploration panel opened",
+        });
+        break;
+      case 'namedRanges':
+        console.log('Named ranges:', data);
+        toast({
+          title: "Named Ranges",
+          description: "Named range feature opened",
+        });
+        break;
+      case 'filterViews':
+        console.log('Filter views:', data);
+        toast({
+          title: "Filter Views",
+          description: "Personal filter views available",
+        });
+        break;
+      case 'importData':
+        console.log('Import data:', data);
+        toast({
+          title: "Import Data",
+          description: `Importing data from ${data?.type || 'unknown'} source`,
+        });
+        break;
+      case 'exportData':
+        console.log('Export data:', data);
+        handleDownload(data?.format || 'xlsx');
+        break;
       default:
         console.log('Unknown action:', action, data);
     }

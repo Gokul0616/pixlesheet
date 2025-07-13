@@ -18,6 +18,7 @@ import { Loader2, Share, Edit2, Users, Wifi, WifiOff } from "lucide-react";
 import { useSpreadsheet } from "@/hooks/use-spreadsheet";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useToast } from "@/hooks/use-toast";
+import { SpreadsheetExporter } from "@/lib/export-utils";
 
 export default function SpreadsheetPage() {
   const params = useParams();

@@ -97,7 +97,7 @@ export default function SpreadsheetPage() {
   };
 
   // Handle toolbar actions
-  const handleToolbarAction = (action: string, data?: any) => {
+  const handleToolbarAction = async (action: string, data?: any) => {
     switch (action) {
       case 'insertRow':
         console.log('Insert row:', data);

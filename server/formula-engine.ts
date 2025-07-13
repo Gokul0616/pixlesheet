@@ -532,4 +532,349 @@ export class FormulaEngine {
     
     return arg;
   }
+
+  // Additional Statistical Functions
+  private countA(args: string[]): number {
+    let count = 0;
+    for (const arg of args) {
+      const values = this.parseArgument(arg);
+      if (Array.isArray(values)) {
+        count += values.filter(v => v !== null && v !== undefined && v !== '').length;
+      } else if (values !== null && values !== undefined && values !== '') {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private countIf(args: string[]): number {
+    if (args.length !== 2) throw new Error('COUNTIF requires exactly 2 arguments');
+    const range = this.parseArgument(args[0]);
+    const criteria = args[1];
+    
+    if (!Array.isArray(range)) return 0;
+    
+    return range.filter(value => this.evaluateCriteria(value, criteria)).length;
+  }
+
+  private sumIf(args: string[]): number {
+    if (args.length !== 2) throw new Error('SUMIF requires exactly 2 arguments');
+    const range = this.parseArgument(args[0]);
+    const criteria = args[1];
+    
+    if (!Array.isArray(range)) return 0;
+    
+    return range
+      .filter(value => this.evaluateCriteria(value, criteria))
+      .reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
+  }
+
+  private averageIf(args: string[]): number {
+    if (args.length !== 2) throw new Error('AVERAGEIF requires exactly 2 arguments');
+    const range = this.parseArgument(args[0]);
+    const criteria = args[1];
+    
+    if (!Array.isArray(range)) return 0;
+    
+    const filteredValues = range.filter(value => this.evaluateCriteria(value, criteria));
+    const numericValues = filteredValues.filter(v => typeof v === 'number');
+    
+    return numericValues.length > 0 ? 
+      numericValues.reduce((sum, val) => sum + val, 0) / numericValues.length : 0;
+  }
+
+  private median(args: string[]): number {
+    const allValues: number[] = [];
+    for (const arg of args) {
+      const values = this.parseArgument(arg);
+      if (Array.isArray(values)) {
+        allValues.push(...values.filter(v => typeof v === 'number'));
+      } else if (typeof values === 'number') {
+        allValues.push(values);
+      }
+    }
+    
+    if (allValues.length === 0) return 0;
+    
+    allValues.sort((a, b) => a - b);
+    const mid = Math.floor(allValues.length / 2);
+    
+    return allValues.length % 2 === 0 ? 
+      (allValues[mid - 1] + allValues[mid]) / 2 : allValues[mid];
+  }
+
+  private mode(args: string[]): number {
+    const allValues: number[] = [];
+    for (const arg of args) {
+      const values = this.parseArgument(arg);
+      if (Array.isArray(values)) {
+        allValues.push(...values.filter(v => typeof v === 'number'));
+      } else if (typeof values === 'number') {
+        allValues.push(values);
+      }
+    }
+    
+    const counts = new Map<number, number>();
+    allValues.forEach(val => counts.set(val, (counts.get(val) || 0) + 1));
+    
+    let maxCount = 0;
+    let mode = 0;
+    counts.forEach((count, value) => {
+      if (count > maxCount) {
+        maxCount = count;
+        mode = value;
+      }
+    });
+    
+    return mode;
+  }
+
+  private stdev(args: string[]): number {
+    return Math.sqrt(this.variance(args));
+  }
+
+  private variance(args: string[]): number {
+    const allValues: number[] = [];
+    for (const arg of args) {
+      const values = this.parseArgument(arg);
+      if (Array.isArray(values)) {
+        allValues.push(...values.filter(v => typeof v === 'number'));
+      } else if (typeof values === 'number') {
+        allValues.push(values);
+      }
+    }
+    
+    if (allValues.length < 2) return 0;
+    
+    const mean = allValues.reduce((sum, val) => sum + val, 0) / allValues.length;
+    const squaredDiffs = allValues.map(val => Math.pow(val - mean, 2));
+    
+    return squaredDiffs.reduce((sum, val) => sum + val, 0) / (allValues.length - 1);
+  }
+
+  // Additional Math Functions
+  private roundUp(args: string[]): number {
+    if (args.length < 1 || args.length > 2) throw new Error('ROUNDUP requires 1 or 2 arguments');
+    
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    const decimals = args.length === 2 ? this.parseArgument(args[1]) as number : 0;
+    
+    return Math.ceil(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+  }
+
+  private roundDown(args: string[]): number {
+    if (args.length < 1 || args.length > 2) throw new Error('ROUNDDOWN requires 1 or 2 arguments');
+    
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    const decimals = args.length === 2 ? this.parseArgument(args[1]) as number : 0;
+    
+    return Math.floor(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
+  }
+
+  private ceil(args: string[]): number {
+    if (args.length !== 1) throw new Error('CEIL requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.ceil(num);
+  }
+
+  private floor(args: string[]): number {
+    if (args.length !== 1) throw new Error('FLOOR requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.floor(num);
+  }
+
+  private exp(args: string[]): number {
+    if (args.length !== 1) throw new Error('EXP requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.exp(num);
+  }
+
+  private ln(args: string[]): number {
+    if (args.length !== 1) throw new Error('LN requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.log(num);
+  }
+
+  private log(args: string[]): number {
+    if (args.length < 1 || args.length > 2) throw new Error('LOG requires 1 or 2 arguments');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    const base = args.length === 2 ? this.parseArgument(args[1]) as number : Math.E;
+    return Math.log(num) / Math.log(base);
+  }
+
+  private log10(args: string[]): number {
+    if (args.length !== 1) throw new Error('LOG10 requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.log10(num);
+  }
+
+  private sin(args: string[]): number {
+    if (args.length !== 1) throw new Error('SIN requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.sin(num);
+  }
+
+  private cos(args: string[]): number {
+    if (args.length !== 1) throw new Error('COS requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.cos(num);
+  }
+
+  private tan(args: string[]): number {
+    if (args.length !== 1) throw new Error('TAN requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const num = Array.isArray(value) ? (value[0] || 0) : value;
+    return Math.tan(num);
+  }
+
+  private pi(args: string[]): number {
+    return Math.PI;
+  }
+
+  private rand(args: string[]): number {
+    return Math.random();
+  }
+
+  private randBetween(args: string[]): number {
+    if (args.length !== 2) throw new Error('RANDBETWEEN requires exactly 2 arguments');
+    const min = this.parseArgument(args[0]) as number;
+    const max = this.parseArgument(args[1]) as number;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // Additional Logic Functions
+  private ifs(args: string[]): string | number {
+    if (args.length < 2 || args.length % 2 !== 0) {
+      throw new Error('IFS requires an even number of arguments (condition-value pairs)');
+    }
+    
+    for (let i = 0; i < args.length; i += 2) {
+      const condition = this.parseArgument(args[i]);
+      if (this.isTruthy(condition)) {
+        return this.parseArgument(args[i + 1]);
+      }
+    }
+    
+    throw new Error('No conditions in IFS were met');
+  }
+
+  private and(args: string[]): boolean {
+    return args.every(arg => this.isTruthy(this.parseArgument(arg)));
+  }
+
+  private or(args: string[]): boolean {
+    return args.some(arg => this.isTruthy(this.parseArgument(arg)));
+  }
+
+  private not(args: string[]): boolean {
+    if (args.length !== 1) throw new Error('NOT requires exactly 1 argument');
+    return !this.isTruthy(this.parseArgument(args[0]));
+  }
+
+  private true(args: string[]): boolean {
+    return true;
+  }
+
+  private false(args: string[]): boolean {
+    return false;
+  }
+
+  // Additional Text Functions
+  private proper(args: string[]): string {
+    if (args.length !== 1) throw new Error('PROPER requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const str = Array.isArray(value) ? String(value[0] || '') : String(value);
+    return str.replace(/\w\S*/g, txt => 
+      txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    );
+  }
+
+  private trim(args: string[]): string {
+    if (args.length !== 1) throw new Error('TRIM requires exactly 1 argument');
+    const value = this.parseArgument(args[0]);
+    const str = Array.isArray(value) ? String(value[0] || '') : String(value);
+    return str.trim();
+  }
+
+  private substitute(args: string[]): string {
+    if (args.length < 3 || args.length > 4) throw new Error('SUBSTITUTE requires 3 or 4 arguments');
+    const text = String(this.parseArgument(args[0]));
+    const oldText = String(this.parseArgument(args[1]));
+    const newText = String(this.parseArgument(args[2]));
+    const occurrence = args.length === 4 ? this.parseArgument(args[3]) as number : undefined;
+    
+    if (occurrence === undefined) {
+      return text.replace(new RegExp(oldText, 'g'), newText);
+    } else {
+      let count = 0;
+      return text.replace(new RegExp(oldText, 'g'), match => {
+        count++;
+        return count === occurrence ? newText : match;
+      });
+    }
+  }
+
+  private replace(args: string[]): string {
+    if (args.length !== 4) throw new Error('REPLACE requires exactly 4 arguments');
+    const text = String(this.parseArgument(args[0]));
+    const start = this.parseArgument(args[1]) as number - 1; // Convert to 0-based
+    const length = this.parseArgument(args[2]) as number;
+    const newText = String(this.parseArgument(args[3]));
+    
+    return text.substring(0, start) + newText + text.substring(start + length);
+  }
+
+  private find(args: string[]): number {
+    if (args.length < 2 || args.length > 3) throw new Error('FIND requires 2 or 3 arguments');
+    const findText = String(this.parseArgument(args[0]));
+    const withinText = String(this.parseArgument(args[1]));
+    const startNum = args.length === 3 ? this.parseArgument(args[2]) as number - 1 : 0;
+    
+    const index = withinText.indexOf(findText, startNum);
+    return index === -1 ? -1 : index + 1; // Convert to 1-based
+  }
+
+  private search(args: string[]): number {
+    return this.find(args); // SEARCH is case-insensitive, but for simplicity using FIND
+  }
+
+  // Helper functions
+  private evaluateCriteria(value: any, criteria: string): boolean {
+    // Remove quotes if present
+    criteria = criteria.replace(/^"(.*)"$/, '$1');
+    
+    // Handle numeric comparisons
+    const numValue = typeof value === 'number' ? value : parseFloat(String(value));
+    
+    if (criteria.startsWith('>=')) {
+      return numValue >= parseFloat(criteria.slice(2));
+    } else if (criteria.startsWith('<=')) {
+      return numValue <= parseFloat(criteria.slice(2));
+    } else if (criteria.startsWith('>')) {
+      return numValue > parseFloat(criteria.slice(1));
+    } else if (criteria.startsWith('<')) {
+      return numValue < parseFloat(criteria.slice(1));
+    } else if (criteria.startsWith('<>')) {
+      return String(value) !== criteria.slice(2);
+    } else {
+      return String(value) === criteria;
+    }
+  }
+
+  private isTruthy(value: any): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value !== 0;
+    if (typeof value === 'string') return value.toLowerCase() === 'true';
+    return Boolean(value);
+  }
 }

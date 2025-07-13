@@ -109,6 +109,57 @@ export const activities = pgTable("activities", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Column and row metadata for resizing
+export const columnMetadata = pgTable("column_metadata", {
+  id: serial("id").primaryKey(),
+  sheetId: integer("sheet_id").notNull(),
+  columnIndex: integer("column_index").notNull(),
+  width: integer("width").default(100),
+  isHidden: boolean("is_hidden").default(false),
+  autoFit: boolean("auto_fit").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const rowMetadata = pgTable("row_metadata", {
+  id: serial("id").primaryKey(),
+  sheetId: integer("sheet_id").notNull(),
+  rowIndex: integer("row_index").notNull(),
+  height: integer("height").default(21),
+  isHidden: boolean("is_hidden").default(false),
+  autoFit: boolean("auto_fit").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Pivot table definitions
+export const pivotTables = pgTable("pivot_tables", {
+  id: serial("id").primaryKey(),
+  sheetId: integer("sheet_id").notNull(),
+  name: text("name").notNull(),
+  sourceRange: text("source_range").notNull(),
+  config: jsonb("config").$type<{
+    rows: string[];
+    columns: string[];
+    values: { field: string; aggregation: "sum" | "count" | "average" | "max" | "min" }[];
+    filters: { field: string; values: string[] }[];
+  }>(),
+  position: jsonb("position").$type<{ row: number; column: number }>(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Named ranges for better formula management
+export const namedRanges = pgTable("named_ranges", {
+  id: serial("id").primaryKey(),
+  spreadsheetId: integer("spreadsheet_id").notNull(),
+  name: text("name").notNull(),
+  range: text("range").notNull(), // e.g., "Sheet1!A1:C10"
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertSpreadsheetSchema = createInsertSchema(spreadsheets).omit({
   id: true,
   createdAt: true,

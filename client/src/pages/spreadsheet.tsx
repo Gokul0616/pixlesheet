@@ -8,6 +8,8 @@ import { MenuBar } from "@/components/spreadsheet/MenuBar";
 import { SheetTabs } from "@/components/spreadsheet/SheetTabs";
 import { Sidebar } from "@/components/spreadsheet/Sidebar";
 import { ShareDialog } from "@/components/spreadsheet/ShareDialog";
+import { AdvancedFeatures } from "@/components/spreadsheet/AdvancedFeatures";
+import { SmartFeatures } from "@/components/spreadsheet/SmartFeatures";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";

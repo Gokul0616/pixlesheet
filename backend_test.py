@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 class UltimatePixelSheetsAPITester:
-    def __init__(self, base_url="http://localhost:5000"):
+    def __init__(self, base_url="https://ultimate-pixel-sheets-google-sheets-enhanced-clone-advanced-grid-manipulation-resizing.replit.app"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0

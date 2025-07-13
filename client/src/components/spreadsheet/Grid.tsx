@@ -4,7 +4,7 @@ import { ContextMenu } from "./ContextMenu";
 
 interface GridProps {
   sheetId: number;
-  selectedCell: { row: number; column: number; sheetId: number } | null;
+  selectedCell: { row: number; column: number } | null;
   selectedCells: { row: number; column: number; sheetId: number }[];
   onCellSelect: (row: number, column: number) => void;
   onCellsSelect: (cells: { row: number; column: number; sheetId: number }[]) => void;
@@ -14,153 +14,58 @@ interface GridProps {
   setFormulaValue: (value: string) => void;
   onCellUpdate: (row: number, column: number, value: string, formula?: string) => void;
   onAction: (action: string, data?: any) => void;
-  realtimeUpdates: any[];
-  gridLinesVisible: boolean;
-  zoom: number;
+  realtimeUpdates?: any[];
+  gridLinesVisible?: boolean;
+  zoom?: number;
 }
 
-export function Grid({ 
-  sheetId, 
+export function Grid({
+  sheetId,
   selectedCell,
   selectedCells,
   onCellSelect,
   onCellsSelect,
-  isEditing, 
-  setIsEditing, 
-  formulaValue, 
-  setFormulaValue, 
+  isEditing,
+  setIsEditing,
+  formulaValue,
+  setFormulaValue,
   onCellUpdate,
   onAction,
   realtimeUpdates,
-  gridLinesVisible,
-  zoom 
+  gridLinesVisible = true,
+  zoom = 100
 }: GridProps) {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; row: number; column: number } | null>(null);
+  const [dragStart, setDragStart] = useState<{ row: number; column: number } | null>(null);
+  const [dragEnd, setDragEnd] = useState<{ row: number; column: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [isFillMode, setIsFillMode] = useState(false);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  const ROWS = 100;
+  const COLUMNS = 26;
+
+  // Fetch cells data
   const { data: cells } = useQuery({
-    queryKey: ["/api/sheets", sheetId, "cells"],
+    queryKey: ['/api/sheets', sheetId, 'cells'],
     enabled: !!sheetId,
   });
 
-  // Selection state
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ row: number; column: number } | null>(null);
-  const [dragEnd, setDragEnd] = useState<{ row: number; column: number } | null>(null);
-  const [isMouseDown, setIsMouseDown] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; row: number; column: number } | null>(null);
-  const [copiedCells, setCopiedCells] = useState<{ row: number; column: number; sheetId: number; value: string }[]>([]);
-  const [cutCells, setCutCells] = useState<{ row: number; column: number; sheetId: number }[]>([]);
-  
-  const gridRef = useRef<HTMLDivElement>(null);
-  const [columnWidths, setColumnWidths] = useState<Record<number, number>>({});
-  const [rowHeights, setRowHeights] = useState<Record<number, number>>({});
-
+  // Get cell value for display
   const getCellValue = (row: number, column: number) => {
-    const cell = cells?.find(c => c.row === row && c.column === column);
-    if (!cell) return "";
-    
-    // Use calculated_value for formulas, otherwise use value
-    if (cell.dataType === 'formula' && 'calculated_value' in cell) {
-      return String(cell.calculated_value);
-    }
-    
-    return cell.value || "";
+    const cell = cells?.find((c: any) => c.row === row && c.column === column);
+    return cell?.value || "";
   };
 
-  const getCellDisplayValue = (row: number, column: number) => {
-    const cell = cells?.find(c => c.row === row && c.column === column);
-    if (!cell) return "";
-    
-    // For editing, always show the original formula or value
-    if (cell.dataType === 'formula' && cell.formula) {
-      return cell.formula;
-    }
-    
-    return cell.value || "";
+  // Get cell for editing (formula or value)
+  const getCellEditValue = (row: number, column: number) => {
+    const cell = cells?.find((c: any) => c.row === row && c.column === column);
+    return cell?.formula || cell?.value || "";
   };
 
-  // Enhanced cell interaction handlers
-  const handleCellMouseDown = (row: number, column: number, event: React.MouseEvent) => {
-    if (event.button !== 0) return; // Only handle left click
-    
-    setIsMouseDown(true);
-    setIsEditing(false);
-    
-    if (event.shiftKey && selectedCell) {
-      // Range selection
-      const startRow = Math.min(selectedCell.row, row);
-      const endRow = Math.max(selectedCell.row, row);
-      const startCol = Math.min(selectedCell.column, column);
-      const endCol = Math.max(selectedCell.column, column);
-      
-      const rangeCells = [];
-      for (let r = startRow; r <= endRow; r++) {
-        for (let c = startCol; c <= endCol; c++) {
-          rangeCells.push({ row: r, column: c, sheetId });
-        }
-      }
-      onCellsSelect(rangeCells);
-    } else if (event.ctrlKey || event.metaKey) {
-      // Multi-select
-      const isAlreadySelected = selectedCells.some(c => c.row === row && c.column === column);
-      if (isAlreadySelected) {
-        onCellsSelect(selectedCells.filter(c => !(c.row === row && c.column === column)));
-      } else {
-        onCellsSelect([...selectedCells, { row, column, sheetId }]);
-      }
-    } else {
-      // Single selection
-      onCellSelect(row, column);
-      setDragStart({ row, column });
-      setIsDragging(true);
-    }
-  };
-
-  const handleCellMouseEnter = (row: number, column: number) => {
-    if (isDragging && dragStart) {
-      setDragEnd({ row, column });
-      
-      // Update selection range
-      const startRow = Math.min(dragStart.row, row);
-      const endRow = Math.max(dragStart.row, row);
-      const startCol = Math.min(dragStart.column, column);
-      const endCol = Math.max(dragStart.column, column);
-      
-      const rangeCells = [];
-      for (let r = startRow; r <= endRow; r++) {
-        for (let c = startCol; c <= endCol; c++) {
-          rangeCells.push({ row: r, column: c, sheetId });
-        }
-      }
-      onCellsSelect(rangeCells);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsMouseDown(false);
-    setIsDragging(false);
-    setDragStart(null);
-    setDragEnd(null);
-  };
-
-  const handleCellDoubleClick = (row: number, column: number) => {
-    setIsEditing(true);
-    setFormulaValue(getCellDisplayValue(row, column));
-  };
-
-  const handleCellRightClick = (row: number, column: number, event: React.MouseEvent) => {
-    event.preventDefault();
-    setContextMenu({
-      x: event.clientX,
-      y: event.clientY,
-      row,
-      column
-    });
-  };
-
-  const handleCellChange = (row: number, column: number, value: string) => {
-    onCellUpdate(row, column, value);
-    setIsEditing(false);
-  };
-
+  // Convert column number to letter (1=A, 2=B, etc.)
   const getColumnLetter = (col: number) => {
     let result = "";
     while (col > 0) {
@@ -171,290 +76,368 @@ export function Grid({
     return result;
   };
 
-  // Enhanced keyboard navigation
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!selectedCell) return;
-
-    const { row, column } = selectedCell;
-
-    switch (event.key) {
-      case 'ArrowUp':
-        event.preventDefault();
-        if (row > 1) onCellSelect(row - 1, column);
-        break;
-      case 'ArrowDown':
-        event.preventDefault();
-        onCellSelect(row + 1, column);
-        break;
-      case 'ArrowLeft':
-        event.preventDefault();
-        if (column > 1) onCellSelect(row, column - 1);
-        break;
-      case 'ArrowRight':
-        event.preventDefault();
-        onCellSelect(row, column + 1);
-        break;
-      case 'Enter':
-        event.preventDefault();
-        if (isEditing) {
-          handleCellChange(row, column, formulaValue);
-        } else {
-          setIsEditing(true);
-          setFormulaValue(getCellDisplayValue(row, column));
-        }
-        break;
-      case 'Escape':
-        event.preventDefault();
-        setIsEditing(false);
-        break;
-      case 'Delete':
-      case 'Backspace':
-        if (!isEditing && selectedCells.length > 0) {
-          event.preventDefault();
-          selectedCells.forEach(cell => {
-            onCellUpdate(cell.row, cell.column, '', '');
-          });
-        }
-        break;
-      case 'c':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          handleCopy();
-        }
-        break;
-      case 'x':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          handleCut();
-        }
-        break;
-      case 'v':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          handlePaste();
-        }
-        break;
-      case 'z':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          onAction('undo');
-        }
-        break;
-      case 'y':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          onAction('redo');
-        }
-        break;
-      case 'a':
-        if (event.ctrlKey || event.metaKey) {
-          event.preventDefault();
-          onAction('selectAll');
-        }
-        break;
-    }
-  }, [selectedCell, selectedCells, isEditing, formulaValue, onCellSelect, onCellUpdate, onAction]);
-
-  // Copy/Cut/Paste functionality
-  const handleCopy = () => {
-    const cellsToCopy = selectedCells.map(cell => {
-      const cellData = cells?.find(c => c.row === cell.row && c.column === cell.column);
-      return {
-        row: cell.row,
-        column: cell.column,
-        sheetId: cell.sheetId,
-        value: cellData?.value || '',
-        formula: cellData?.formula || ''
-      };
-    });
-    setCopiedCells(cellsToCopy);
-    setCutCells([]);
-    onAction('copy', { cells: cellsToCopy });
-  };
-
-  const handleCut = () => {
-    handleCopy();
-    setCutCells(selectedCells);
-    onAction('cut', { cells: selectedCells });
-  };
-
-  const handlePaste = () => {
-    if (copiedCells.length === 0 || !selectedCell) return;
-
-    const startRow = selectedCell.row;
-    const startCol = selectedCell.column;
-
-    copiedCells.forEach((copiedCell, index) => {
-      const targetRow = startRow + (copiedCell.row - copiedCells[0].row);
-      const targetCol = startCol + (copiedCell.column - copiedCells[0].column);
-      
-      onCellUpdate(targetRow, targetCol, copiedCell.value, copiedCell.formula);
-    });
-
-    // Clear cut cells
-    if (cutCells.length > 0) {
-      cutCells.forEach(cell => {
-        onCellUpdate(cell.row, cell.column, '', '');
-      });
-      setCutCells([]);
-    }
-
-    onAction('paste', { 
-      source: copiedCells, 
-      target: { row: startRow, column: startCol } 
-    });
-  };
-
-  // Check if cell is in selection
+  // Check if cell is selected
   const isCellSelected = (row: number, column: number) => {
     return selectedCells.some(cell => cell.row === row && cell.column === column);
   };
 
-  const isCellCopied = (row: number, column: number) => {
-    return copiedCells.some(cell => cell.row === row && cell.column === column);
+  // Check if cell is the primary selected cell
+  const isActiveCell = (row: number, column: number) => {
+    return selectedCell && selectedCell.row === row && selectedCell.column === column;
   };
 
-  const isCellCut = (row: number, column: number) => {
-    return cutCells.some(cell => cell.row === row && cell.column === column);
+  // Handle single cell click
+  const handleCellClick = (row: number, column: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    setContextMenu(null);
+    
+    if (isEditing) {
+      setIsEditing(false);
+    }
+    
+    if (event.shiftKey && selectedCell) {
+      // Range selection with Shift+Click
+      handleRangeSelection(row, column);
+    } else if (event.ctrlKey || event.metaKey) {
+      // Multi-selection with Ctrl+Click
+      handleMultiSelection(row, column);
+    } else {
+      // Single cell selection
+      onCellSelect(row, column);
+      onCellsSelect([{ row, column, sheetId }]);
+    }
   };
 
-  // Add global event listeners
+  // Handle double click to enter edit mode
+  const handleCellDoubleClick = (row: number, column: number) => {
+    onCellSelect(row, column);
+    setIsEditing(true);
+    const editValue = getCellEditValue(row, column);
+    setFormulaValue(editValue);
+    
+    // Focus the input after state update
+    setTimeout(() => {
+      if (editInputRef.current) {
+        editInputRef.current.focus();
+        editInputRef.current.select();
+      }
+    }, 0);
+  };
+
+  // Handle range selection
+  const handleRangeSelection = (endRow: number, endColumn: number) => {
+    if (!selectedCell) return;
+    
+    const startRow = Math.min(selectedCell.row, endRow);
+    const endRowFinal = Math.max(selectedCell.row, endRow);
+    const startCol = Math.min(selectedCell.column, endColumn);
+    const endCol = Math.max(selectedCell.column, endColumn);
+    
+    const rangeCells = [];
+    for (let r = startRow; r <= endRowFinal; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        rangeCells.push({ row: r, column: c, sheetId });
+      }
+    }
+    onCellsSelect(rangeCells);
+  };
+
+  // Handle multi-selection
+  const handleMultiSelection = (row: number, column: number) => {
+    const isAlreadySelected = selectedCells.some(c => c.row === row && c.column === column);
+    
+    if (isAlreadySelected) {
+      // Remove from selection
+      const newSelection = selectedCells.filter(c => !(c.row === row && c.column === column));
+      onCellsSelect(newSelection);
+    } else {
+      // Add to selection
+      onCellsSelect([...selectedCells, { row, column, sheetId }]);
+    }
+  };
+
+  // Handle mouse down for drag operations
+  const handleMouseDown = (row: number, column: number, event: React.MouseEvent) => {
+    if (event.button !== 0) return; // Only left click
+    
+    setIsMouseDown(true);
+    setDragStart({ row, column });
+    
+    // Check if this is a fill operation (dragging from selection corner)
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    const isCornerDrag = event.clientX > rect.right - 8 && event.clientY > rect.bottom - 8;
+    setIsFillMode(isCornerDrag);
+  };
+
+  // Handle mouse enter during drag
+  const handleMouseEnter = (row: number, column: number) => {
+    if (!isMouseDown || !dragStart) return;
+    
+    setDragEnd({ row, column });
+    
+    if (isFillMode) {
+      // Fill mode: fill from first cell to current
+      handleFillOperation(row, column);
+    } else {
+      // Selection mode: select range
+      handleRangeSelection(row, column);
+    }
+  };
+
+  // Handle fill operation (copy first cell to range)
+  const handleFillOperation = (endRow: number, endColumn: number) => {
+    if (!dragStart) return;
+    
+    const sourceValue = getCellValue(dragStart.row, dragStart.column);
+    const sourceFormula = getCellEditValue(dragStart.row, dragStart.column);
+    
+    const startRow = Math.min(dragStart.row, endRow);
+    const endRowFinal = Math.max(dragStart.row, endRow);
+    const startCol = Math.min(dragStart.column, endColumn);
+    const endCol = Math.max(dragStart.column, endColumn);
+    
+    // Create selection range
+    const rangeCells = [];
+    for (let r = startRow; r <= endRowFinal; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        rangeCells.push({ row: r, column: c, sheetId });
+      }
+    }
+    onCellsSelect(rangeCells);
+  };
+
+  // Handle mouse up
+  const handleMouseUp = () => {
+    if (isFillMode && dragStart && dragEnd && selectedCells.length > 1) {
+      // Apply fill operation
+      const sourceValue = getCellValue(dragStart.row, dragStart.column);
+      const sourceFormula = getCellEditValue(dragStart.row, dragStart.column);
+      
+      // Fill all selected cells except the source
+      selectedCells.forEach(cell => {
+        if (!(cell.row === dragStart.row && cell.column === dragStart.column)) {
+          onCellUpdate(cell.row, cell.column, sourceValue, sourceFormula);
+        }
+      });
+    }
+    
+    setIsMouseDown(false);
+    setIsDragging(false);
+    setIsFillMode(false);
+    setDragStart(null);
+    setDragEnd(null);
+  };
+
+  // Handle right click for context menu
+  const handleRightClick = (row: number, column: number, event: React.MouseEvent) => {
+    event.preventDefault();
+    
+    // Select the cell if it's not already selected
+    if (!isCellSelected(row, column)) {
+      onCellSelect(row, column);
+      onCellsSelect([{ row, column, sheetId }]);
+    }
+    
+    setContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      row,
+      column
+    });
+  };
+
+  // Handle keyboard events
   useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!selectedCell) return;
+      
+      // Don't handle keys if we're editing
+      if (isEditing) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          setIsEditing(false);
+          onCellUpdate(selectedCell.row, selectedCell.column, formulaValue);
+          // Move to next row like Google Sheets
+          onCellSelect(selectedCell.row + 1, selectedCell.column);
+          onCellsSelect([{ row: selectedCell.row + 1, column: selectedCell.column, sheetId }]);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          setIsEditing(false);
+          setFormulaValue(getCellEditValue(selectedCell.row, selectedCell.column));
+        } else if (event.key === 'Tab') {
+          event.preventDefault();
+          setIsEditing(false);
+          onCellUpdate(selectedCell.row, selectedCell.column, formulaValue);
+          // Move to next column
+          onCellSelect(selectedCell.row, selectedCell.column + 1);
+          onCellsSelect([{ row: selectedCell.row, column: selectedCell.column + 1, sheetId }]);
+        }
+        return;
+      }
+      
+      // Navigation keys
+      let newRow = selectedCell.row;
+      let newColumn = selectedCell.column;
+      
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault();
+          newRow = Math.max(1, selectedCell.row - 1);
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          newRow = Math.min(ROWS, selectedCell.row + 1);
+          break;
+        case 'ArrowLeft':
+          event.preventDefault();
+          newColumn = Math.max(1, selectedCell.column - 1);
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          newColumn = Math.min(COLUMNS, selectedCell.column + 1);
+          break;
+        case 'Enter':
+          event.preventDefault();
+          newRow = Math.min(ROWS, selectedCell.row + 1);
+          break;
+        case 'Tab':
+          event.preventDefault();
+          newColumn = Math.min(COLUMNS, selectedCell.column + 1);
+          break;
+        case 'F2':
+          event.preventDefault();
+          handleCellDoubleClick(selectedCell.row, selectedCell.column);
+          return;
+        case 'Delete':
+          event.preventDefault();
+          selectedCells.forEach(cell => {
+            onCellUpdate(cell.row, cell.column, '', '');
+          });
+          return;
+        case 'c':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            onAction('copy', { cells: selectedCells });
+            return;
+          }
+          break;
+        case 'v':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            onAction('paste');
+            return;
+          }
+          break;
+        case 'x':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            onAction('cut', { cells: selectedCells });
+            return;
+          }
+          break;
+        default:
+          // Start typing in cell
+          if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+            setIsEditing(true);
+            setFormulaValue(event.key);
+          }
+          return;
+      }
+      
+      if (newRow !== selectedCell.row || newColumn !== selectedCell.column) {
+        onCellSelect(newRow, newColumn);
+        onCellsSelect([{ row: newRow, column: newColumn, sheetId }]);
+      }
+    };
+    
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('click', () => setContextMenu(null));
-
+    
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('click', () => setContextMenu(null));
     };
-  }, [handleKeyDown]);
+  }, [selectedCell, selectedCells, isEditing, formulaValue, onCellSelect, onCellsSelect, onCellUpdate, onAction]);
 
   return (
-    <div 
-      ref={gridRef}
-      className="flex-1 overflow-auto bg-white relative" 
-      style={{ zoom: `${zoom}%` }}
-      onMouseLeave={() => {
-        setIsDragging(false);
-        setDragStart(null);
-        setDragEnd(null);
-      }}
-    >
-      <div className="grid grid-cols-[40px_repeat(26,minmax(100px,1fr))] grid-rows-[24px_repeat(100,21px)] min-w-max">
-        {/* Top-left corner */}
-        <div className="bg-gray-100 border-r border-b border-gray-300 sticky top-0 left-0 z-20"></div>
-        
-        {/* Column headers */}
-        {Array.from({ length: 26 }, (_, col) => {
-          const isColumnSelected = selectedCells.some(cell => cell.column === col + 1);
+    <div ref={gridRef} className="relative overflow-auto h-full bg-white">
+      <div className="grid grid-cols-[40px_repeat(26,_120px)] gap-0">
+        {/* Header row */}
+        <div className="sticky top-0 bg-gray-100 border-r border-b border-gray-300 h-8 flex items-center justify-center text-xs font-medium z-10"></div>
+        {Array.from({ length: COLUMNS }, (_, i) => (
+          <div
+            key={`header-${i + 1}`}
+            className="sticky top-0 bg-gray-100 border-r border-b border-gray-300 h-8 flex items-center justify-center text-xs font-medium z-10"
+          >
+            {getColumnLetter(i + 1)}
+          </div>
+        ))}
+
+        {/* Data rows */}
+        {Array.from({ length: ROWS }, (_, rowIndex) => {
+          const row = rowIndex + 1;
           return (
-            <div
-              key={`col-${col}`}
-              className={`
-                bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center 
-                text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-200 sticky top-0 z-10
-                ${isColumnSelected ? 'bg-blue-100' : ''}
-              `}
-              onClick={() => {
-                // Select entire column
-                const columnCells = Array.from({ length: 100 }, (_, row) => ({
-                  row: row + 1,
-                  column: col + 1,
-                  sheetId
-                }));
-                onCellsSelect(columnCells);
-              }}
-            >
-              {getColumnLetter(col + 1)}
+            <div key={`row-${row}`} className="contents">
+              {/* Row header */}
+              <div className="sticky left-0 bg-gray-100 border-r border-b border-gray-300 h-8 flex items-center justify-center text-xs font-medium z-10">
+                {row}
+              </div>
+              
+              {/* Data cells */}
+              {Array.from({ length: COLUMNS }, (_, colIndex) => {
+                const column = colIndex + 1;
+                const cellValue = getCellValue(row, column);
+                const isSelected = isCellSelected(row, column);
+                const isActive = isActiveCell(row, column);
+                const isCurrentlyEditing = isActive && isEditing;
+                
+                return (
+                  <div
+                    key={`cell-${row}-${column}`}
+                    className={`
+                      relative h-8 border-r border-b border-gray-200 cursor-cell
+                      ${isSelected ? 'bg-blue-100' : 'bg-white hover:bg-gray-50'}
+                      ${isActive ? 'ring-2 ring-blue-500 ring-inset' : ''}
+                      ${gridLinesVisible ? '' : 'border-transparent'}
+                    `}
+                    onClick={(e) => handleCellClick(row, column, e)}
+                    onDoubleClick={() => handleCellDoubleClick(row, column)}
+                    onMouseDown={(e) => handleMouseDown(row, column, e)}
+                    onMouseEnter={() => handleMouseEnter(row, column)}
+                    onContextMenu={(e) => handleRightClick(row, column, e)}
+                  >
+                    {isCurrentlyEditing ? (
+                      <input
+                        ref={editInputRef}
+                        type="text"
+                        value={formulaValue}
+                        onChange={(e) => setFormulaValue(e.target.value)}
+                        onBlur={() => {
+                          setIsEditing(false);
+                          onCellUpdate(row, column, formulaValue);
+                        }}
+                        className="w-full h-full px-2 bg-white border-2 border-blue-500 outline-none text-sm"
+                        autoFocus
+                      />
+                    ) : (
+                      <div className="w-full h-full px-2 py-1 text-sm truncate flex items-center">
+                        {cellValue}
+                      </div>
+                    )}
+                    
+                    {/* Fill handle for drag operations */}
+                    {isActive && !isEditing && (
+                      <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair transform translate-x-1 translate-y-1"></div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           );
         })}
-
-        {/* Rows */}
-        {Array.from({ length: 100 }, (_, row) => (
-          <div key={`rows-${row}`} className="contents">
-            {/* Row header */}
-            <div 
-              className={`
-                bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center 
-                text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-200 sticky left-0 z-10
-                ${selectedCells.some(cell => cell.row === row + 1) ? 'bg-blue-100' : ''}
-              `}
-              onClick={() => {
-                // Select entire row
-                const rowCells = Array.from({ length: 26 }, (_, col) => ({
-                  row: row + 1,
-                  column: col + 1,
-                  sheetId
-                }));
-                onCellsSelect(rowCells);
-              }}
-            >
-              {row + 1}
-            </div>
-            
-            {/* Cells in this row */}
-            {Array.from({ length: 26 }, (_, col) => {
-              const cellValue = getCellValue(row + 1, col + 1);
-              const isSelected = isCellSelected(row + 1, col + 1);
-              const isActiveCell = selectedCell?.row === row + 1 && selectedCell?.column === col + 1;
-              const isEditingCell = isActiveCell && isEditing;
-              const isCopiedCell = isCellCopied(row + 1, col + 1);
-              const isCutCell = isCellCut(row + 1, col + 1);
-              
-              return (
-                <div
-                  key={`cell-${row}-${col}`}
-                  className={`
-                    border-r border-b relative font-mono text-sm p-1 cursor-cell min-h-[21px]
-                    ${gridLinesVisible ? 'border-gray-200' : 'border-transparent'}
-                    ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}
-                    ${isActiveCell ? 'border-blue-500 border-2 bg-white' : ''}
-                    ${isEditingCell ? 'bg-white border-blue-500 border-2 z-30' : ''}
-                    ${isCopiedCell ? 'border-green-500 border-dashed animate-pulse' : ''}
-                    ${isCutCell ? 'border-red-500 border-dashed opacity-50' : ''}
-                  `}
-                  onMouseDown={(e) => handleCellMouseDown(row + 1, col + 1, e)}
-                  onMouseEnter={() => handleCellMouseEnter(row + 1, col + 1)}
-                  onDoubleClick={() => handleCellDoubleClick(row + 1, col + 1)}
-                  onContextMenu={(e) => handleCellRightClick(row + 1, col + 1, e)}
-                >
-                  {isEditingCell ? (
-                    <input
-                      type="text"
-                      value={formulaValue}
-                      onChange={(e) => setFormulaValue(e.target.value)}
-                      onBlur={() => handleCellChange(row + 1, col + 1, formulaValue)}
-                      onKeyDown={(e) => {
-                        e.stopPropagation();
-                        if (e.key === 'Enter') {
-                          handleCellChange(row + 1, col + 1, formulaValue);
-                        }
-                        if (e.key === 'Escape') {
-                          setIsEditing(false);
-                        }
-                      }}
-                      className="w-full h-full bg-transparent border-none outline-none text-sm"
-                      autoFocus
-                    />
-                  ) : (
-                    <span className="block truncate text-sm leading-tight">{cellValue}</span>
-                  )}
-                  
-                  {/* Selection indicator for active cell */}
-                  {isActiveCell && !isEditing && (
-                    <div className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair"></div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ))}
       </div>
 
-      {/* Enhanced Context Menu */}
+      {/* Context Menu */}
       <ContextMenu
         x={contextMenu?.x || 0}
         y={contextMenu?.y || 0}

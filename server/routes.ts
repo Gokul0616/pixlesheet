@@ -106,7 +106,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sheetId = parseInt(req.params.id);
       const cells = await storage.getCellsBySheet(sheetId);
-      res.json(cells);
+      
+      // Calculate formula values
+      const formulaEngine = new FormulaEngine();
+      formulaEngine.setCells(cells);
+      
+      // Add calculated values for formulas
+      const cellsWithCalculatedValues = cells.map(cell => {
+        if (cell.dataType === 'formula' && cell.formula) {
+          try {
+            const result = formulaEngine.evaluate(cell.formula);
+            return {
+              ...cell,
+              calculated_value: result
+            };
+          } catch (error) {
+            return {
+              ...cell,
+              calculated_value: '#ERROR'
+            };
+          }
+        }
+        return cell;
+      });
+      
+      res.json(cellsWithCalculatedValues);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch cells" });
     }

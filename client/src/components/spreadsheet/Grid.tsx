@@ -33,7 +33,26 @@ export function Grid({
 
   const getCellValue = (row: number, column: number) => {
     const cell = cells?.find(c => c.row === row && c.column === column);
-    return cell?.value || "";
+    if (!cell) return "";
+    
+    // Use calculated_value for formulas, otherwise use value
+    if (cell.dataType === 'formula' && 'calculated_value' in cell) {
+      return String(cell.calculated_value);
+    }
+    
+    return cell.value || "";
+  };
+
+  const getCellDisplayValue = (row: number, column: number) => {
+    const cell = cells?.find(c => c.row === row && c.column === column);
+    if (!cell) return "";
+    
+    // For editing, always show the original formula or value
+    if (cell.dataType === 'formula' && cell.formula) {
+      return cell.formula;
+    }
+    
+    return cell.value || "";
   };
 
   const handleCellClick = (row: number, column: number) => {

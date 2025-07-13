@@ -277,22 +277,74 @@ export default function SpreadsheetPage() {
 
   // Handle download functionality  
   const handleDownload = (format: string) => {
-    // Create a simple CSV download for demonstration
-    if (format === 'csv') {
-      const csvContent = "Revenue,50000,55000\nExpenses,35000,38000\nProfit,=B1-B2,=C1-C2";
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `spreadsheet.${format}`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } else {
-      toast({
-        title: "Download",
-        description: `${format.toUpperCase()} download will be implemented soon`,
-      });
+    // Create sample data for different formats
+    const sampleData = "Revenue,50000,55000\nExpenses,35000,38000\nProfit,15000,17000";
+    
+    switch (format) {
+      case 'csv':
+        const csvBlob = new Blob([sampleData], { type: 'text/csv' });
+        downloadFile(csvBlob, `spreadsheet.csv`);
+        break;
+      case 'xlsx':
+        toast({
+          title: "Excel Export",
+          description: "XLSX export will be implemented with full formatting support",
+        });
+        break;
+      case 'pdf':
+        toast({
+          title: "PDF Export",
+          description: "PDF export will include charts and formatting",
+        });
+        break;
+      case 'json':
+        const jsonData = {
+          sheets: [
+            {
+              name: "Sheet1",
+              data: [
+                ["Revenue", 50000, 55000],
+                ["Expenses", 35000, 38000],
+                ["Profit", 15000, 17000]
+              ]
+            }
+          ]
+        };
+        const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+        downloadFile(jsonBlob, `spreadsheet.json`);
+        break;
+      case 'html':
+        const htmlContent = `
+          <table>
+            <tr><th>Category</th><th>Q1</th><th>Q2</th></tr>
+            <tr><td>Revenue</td><td>50000</td><td>55000</td></tr>
+            <tr><td>Expenses</td><td>35000</td><td>38000</td></tr>
+            <tr><td>Profit</td><td>15000</td><td>17000</td></tr>
+          </table>
+        `;
+        const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+        downloadFile(htmlBlob, `spreadsheet.html`);
+        break;
+      default:
+        toast({
+          title: "Export Format",
+          description: `${format.toUpperCase()} export will be implemented soon`,
+        });
     }
+  };
+
+  const downloadFile = (blob: Blob, filename: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Download Started",
+      description: `${filename} is being downloaded`,
+    });
   };
 
   if (isLoadingSpreadsheet || isLoadingSheets) {

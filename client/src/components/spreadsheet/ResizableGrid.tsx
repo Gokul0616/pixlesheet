@@ -222,7 +222,7 @@ export function ResizableGrid({
     if (type === 'column') {
       // Auto-fit column width based on content
       let maxWidth = 60;
-      for (let row = 1; row <= 50; row++) {
+      for (let row = 1; row <= 100; row++) {
         const value = getCellValue(row, index);
         const textWidth = value.length * 8 + 16; // Rough calculation
         maxWidth = Math.max(maxWidth, textWidth);
@@ -384,13 +384,17 @@ export function ResizableGrid({
   return (
     <div 
       ref={gridRef}
-      className="flex-1 overflow-auto bg-white relative" 
-      style={{ zoom: `${zoom}%` }}
+      className="flex-1 overflow-auto bg-white relative scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300" 
+      style={{ 
+        zoom: `${zoom}%`,
+        scrollBehavior: 'smooth',
+        willChange: 'scroll-position'
+      }}
       onMouseMove={handleResizeMove}
       onMouseUp={handleResizeEnd}
       onMouseLeave={handleResizeEnd}
     >
-      <div className="relative" style={{ minWidth: getColumnPosition(27), minHeight: getRowPosition(51) }}>
+      <div className="relative" style={{ minWidth: getColumnPosition(27), minHeight: getRowPosition(101) }}>
         {/* Top-left corner */}
         <div 
           className="absolute bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center"
@@ -451,7 +455,7 @@ export function ResizableGrid({
         })}
 
         {/* Row headers and cells */}
-        {Array.from({ length: 50 }, (_, row) => {
+        {Array.from({ length: 100 }, (_, row) => {
           const rowIndex = row + 1;
           const top = getRowPosition(rowIndex);
           const height = getRowHeight(rowIndex);

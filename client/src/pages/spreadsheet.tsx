@@ -1,5 +1,5 @@
 import { useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ResizableGrid } from "@/components/spreadsheet/ResizableGrid";
 import { FormulaBar } from "@/components/spreadsheet/FormulaBar";
@@ -29,9 +29,11 @@ export default function SpreadsheetPage() {
   const [gridLinesVisible, setGridLinesVisible] = useState(true);
   const [zoom, setZoom] = useState(100);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const {
     selectedCell,
+    setSelectedCell,
     activeSheet,
     setActiveSheet,
     formulaValue,
@@ -80,20 +82,78 @@ export default function SpreadsheetPage() {
   };
 
   const getCellDisplayValue = (row: number, column: number) => {
-    // This would normally come from the cells data
-    return "";
-  };
-  const handleCellUpdate = (row: number, column: number, value: string, formula?: string) => {
-    const cellData = {
-      row,
-      column,
-      sheetId: activeSheet,
-      value,
-      formula
-    };
+    // Get from the cells data loaded by the ResizableGrid
+    const { data: cells } = useQuery({
+      queryKey: ["/api/sheets", activeSheet, "cells"],
+      enabled: !!activeSheet,
+    });
     
-    // Broadcast to other users instantly
-    sendCellUpdate(cellData, value, formula);
+    const cell = cells?.find((c: any) => c.row === row && c.column === column);
+    if (!cell) return "";
+    
+    // For editing, show the raw formula or value
+    if (cell.dataType === 'formula' && cell.formula) {
+      return cell.formula;
+    }
+    
+    return cell.value || "";
+  };
+  const handleCellUpdate = async (row: number, column: number, value: string, formula?: string) => {
+    if (!activeSheet) return;
+    
+    try {
+      // Determine data type and process the value
+      let processedValue = value;
+      let dataType = 'text';
+      let processedFormula = formula;
+      
+      if (value.startsWith('=')) {
+        dataType = 'formula';
+        processedFormula = value;
+        processedValue = value; // Keep the formula as value for now
+      } else if (!isNaN(Number(value)) && value !== '') {
+        dataType = 'number';
+      }
+      
+      // Update the cell on the backend
+      const response = await fetch(`/api/sheets/${activeSheet}/cells/${row}/${column}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          value: processedValue,
+          formula: processedFormula,
+          dataType
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update cell');
+      }
+      
+      // Invalidate and refetch the cells
+      queryClient.invalidateQueries({ queryKey: ["/api/sheets", activeSheet, "cells"] });
+      
+      // Broadcast to other users
+      sendCellUpdate({
+        row,
+        column,
+        sheetId: activeSheet,
+        value: processedValue,
+        formula: processedFormula
+      }, processedValue, processedFormula);
+      
+      toast({
+        title: "Cell Updated",
+        description: `Cell ${String.fromCharCode(64 + column)}${row} updated successfully`,
+      });
+    } catch (error) {
+      console.error('Error updating cell:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update cell. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Handle toolbar actions

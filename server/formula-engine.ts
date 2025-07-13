@@ -82,30 +82,6 @@ export class FormulaEngine {
       // Date/Time Functions
       ['TODAY', this.today.bind(this)],
       ['NOW', this.now.bind(this)],
-      ['DATE', this.date.bind(this)],
-      ['TIME', this.time.bind(this)],
-      ['YEAR', this.year.bind(this)],
-      ['MONTH', this.month.bind(this)],
-      ['DAY', this.day.bind(this)],
-      ['HOUR', this.hour.bind(this)],
-      ['MINUTE', this.minute.bind(this)],
-      ['SECOND', this.second.bind(this)],
-      ['WEEKDAY', this.weekday.bind(this)],
-      ['DATEDIF', this.dateDif.bind(this)],
-      
-      // Lookup Functions
-      ['VLOOKUP', this.vlookup.bind(this)],
-      ['HLOOKUP', this.hlookup.bind(this)],
-      ['INDEX', this.index.bind(this)],
-      ['MATCH', this.match.bind(this)],
-      
-      // Financial Functions
-      ['PMT', this.pmt.bind(this)],
-      ['PV', this.pv.bind(this)],
-      ['FV', this.fv.bind(this)],
-      ['RATE', this.rate.bind(this)],
-      ['NPV', this.npv.bind(this)],
-      ['IRR', this.irr.bind(this)],
     ]);
   }
 

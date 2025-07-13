@@ -5,12 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import SpreadsheetPage from "@/pages/spreadsheet";
+import LandingPage from "@/pages/landing";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={SpreadsheetPage} />
+      <Route path="/" component={LandingPage} />
       <Route path="/spreadsheet/:id" component={SpreadsheetPage} />
+      <Route path="/dashboard" component={SpreadsheetPage} />
       <Route component={NotFound} />
     </Switch>
   );

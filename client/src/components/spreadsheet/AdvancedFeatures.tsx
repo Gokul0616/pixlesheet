@@ -45,20 +45,98 @@ export function AdvancedFeatures({ selectedCell, onAction }: AdvancedFeaturesPro
   const [protectedRangeOpen, setProtectedRangeOpen] = useState(false);
   const [chartDialogOpen, setChartDialogOpen] = useState(false);
   const [pivotTableOpen, setPivotTableOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mutation for updating cell validation
+  const updateCellValidation = useMutation({
+    mutationFn: async ({ sheetId, row, column, validation }: any) => {
+      const response = await fetch(`/api/sheets/${sheetId}/cells/${row}/${column}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ validation }),
+      });
+      if (!response.ok) throw new Error('Failed to update validation');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sheets", selectedCell?.sheetId, "cells"] });
+      toast({
+        title: "Validation Applied",
+        description: "Cell validation rules have been updated",
+      });
+    }
+  });
+
+  // Mutation for updating cell formatting
+  const updateCellFormatting = useMutation({
+    mutationFn: async ({ sheetId, row, column, formatting }: any) => {
+      const response = await fetch(`/api/sheets/${sheetId}/cells/${row}/${column}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ formatting }),
+      });
+      if (!response.ok) throw new Error('Failed to update formatting');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sheets", selectedCell?.sheetId, "cells"] });
+      toast({
+        title: "Formatting Applied",
+        description: "Conditional formatting has been applied",
+      });
+    }
+  });
 
   const handleDataValidation = (config: any) => {
-    onAction('dataValidation', {
-      cell: selectedCell,
-      config
+    if (!selectedCell) {
+      toast({
+        title: "No Cell Selected",
+        description: "Please select a cell to apply validation",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    updateCellValidation.mutate({
+      sheetId: selectedCell.sheetId,
+      row: selectedCell.row,
+      column: selectedCell.column,
+      validation: config
     });
+    
     setDataValidationOpen(false);
   };
 
   const handleConditionalFormatting = (config: any) => {
-    onAction('conditionalFormatting', {
-      cell: selectedCell,
-      config
+    if (!selectedCell) {
+      toast({
+        title: "No Cell Selected", 
+        description: "Please select a cell to apply formatting",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Build conditional formatting object
+    const conditionalFormatting = {
+      type: config.formatType,
+      condition: config.condition,
+      operator: config.operator,
+      value: config.value,
+      value2: config.value2,
+      colorScale: config.colorScale,
+      iconSet: config.iconSet,
+      dataBarColor: config.dataBarColor
+    };
+
+    updateCellFormatting.mutate({
+      sheetId: selectedCell.sheetId,
+      row: selectedCell.row,
+      column: selectedCell.column,
+      formatting: { conditionalFormatting: [conditionalFormatting] }
     });
+
     setConditionalFormattingOpen(false);
   };
 

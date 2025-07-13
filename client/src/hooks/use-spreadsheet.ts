@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 export function useSpreadsheet(spreadsheetId: number) {
-  const [selectedCell, setSelectedCell] = useState<string | null>("A1");
+  const [selectedCell, setSelectedCell] = useState<{ row: number; column: number; sheetId: number } | null>(null);
   const [activeSheet, setActiveSheet] = useState<number | null>(null);
   const [formulaValue, setFormulaValue] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -16,6 +16,8 @@ export function useSpreadsheet(spreadsheetId: number) {
   useEffect(() => {
     if (sheets && sheets.length > 0 && !activeSheet) {
       setActiveSheet(sheets[0].id);
+      // Set default selected cell
+      setSelectedCell({ row: 1, column: 1, sheetId: sheets[0].id });
     }
   }, [sheets, activeSheet]);
 

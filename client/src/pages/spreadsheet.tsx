@@ -293,7 +293,7 @@ export default function SpreadsheetPage() {
         break;
       case 'exportData':
         console.log('Export data:', data);
-        handleDownload(data?.format || 'xlsx');
+        await handleDownload(data?.format || 'xlsx', data?.options || {});
         break;
       default:
         console.log('Unknown action:', action, data);

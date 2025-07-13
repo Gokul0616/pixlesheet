@@ -45,11 +45,58 @@ export function ResizableGrid({
   const [rowHeights, setRowHeights] = useState<RowHeight>({});
   const [isResizing, setIsResizing] = useState<{ type: 'column' | 'row'; index: number } | null>(null);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
+  const [showManualResize, setShowManualResize] = useState<{ type: 'column' | 'row'; index: number } | null>(null);
+  const [manualSize, setManualSize] = useState<string>('');
+  const [selectedColumns, setSelectedColumns] = useState<number[]>([]);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const gridRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: cells } = useQuery({
     queryKey: ["/api/sheets", sheetId, "cells"],
     enabled: !!sheetId,
+  });
+
+  const { data: columnMetadata } = useQuery({
+    queryKey: ["/api/sheets", sheetId, "columns"],
+    enabled: !!sheetId,
+  });
+
+  const { data: rowMetadata } = useQuery({
+    queryKey: ["/api/sheets", sheetId, "rows"],
+    enabled: !!sheetId,
+  });
+
+  // Mutations for saving resize data
+  const updateColumnMutation = useMutation({
+    mutationFn: async ({ columnIndex, updates }: { columnIndex: number; updates: any }) => {
+      const response = await fetch(`/api/sheets/${sheetId}/columns/${columnIndex}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Failed to update column');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sheets", sheetId, "columns"] });
+    }
+  });
+
+  const updateRowMutation = useMutation({
+    mutationFn: async ({ rowIndex, updates }: { rowIndex: number; updates: any }) => {
+      const response = await fetch(`/api/sheets/${sheetId}/rows/${rowIndex}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Failed to update row');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sheets", sheetId, "rows"] });
+    }
   });
 
   const defaultColumnWidth = 100;
@@ -57,8 +104,18 @@ export function ResizableGrid({
   const headerHeight = 24;
   const headerWidth = 40;
 
-  const getColumnWidth = (col: number) => columnWidths[col] || defaultColumnWidth;
-  const getRowHeight = (row: number) => rowHeights[row] || defaultRowHeight;
+  // Get width/height from metadata or local state
+  const getColumnWidth = useCallback((col: number) => {
+    const metadata = columnMetadata?.find((m: any) => m.columnIndex === col);
+    if (metadata) return metadata.width;
+    return columnWidths[col] || defaultColumnWidth;
+  }, [columnMetadata, columnWidths]);
+
+  const getRowHeight = useCallback((row: number) => {
+    const metadata = rowMetadata?.find((m: any) => m.rowIndex === row);
+    if (metadata) return metadata.height;
+    return rowHeights[row] || defaultRowHeight;
+  }, [rowMetadata, rowHeights]);
 
   const getCellValue = (row: number, column: number) => {
     const cell = cells?.find(c => c.row === row && c.column === column);

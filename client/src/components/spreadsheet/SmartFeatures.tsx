@@ -1,22 +1,42 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { 
+  Filter, 
+  Lock, 
   Sparkles, 
-  Brain, 
-  Search, 
-  Download, 
-  Upload, 
-  FileSpreadsheet, 
-  Database,
-  Lightbulb,
+  PieChart, 
+  Database, 
+  Palette, 
+  Eye,
+  EyeOff,
+  Plus,
+  Settings,
   TrendingUp,
-  Zap,
-  Wand2
+  BarChart3,
+  Table,
+  FileText,
+  Image,
+  MessageSquare,
+  Share2,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  Lightbulb,
+  Search,
+  Wand2,
+  Brain,
+  Zap
 } from "lucide-react";
 
 interface SmartFeaturesProps {

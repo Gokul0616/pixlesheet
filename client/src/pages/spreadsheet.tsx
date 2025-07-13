@@ -29,6 +29,9 @@ export default function SpreadsheetPage() {
   const [zoom, setZoom] = useState(100);
   const { toast } = useToast();
 
+  // Chart management
+  const { charts, setCharts, addChart } = useChartManager(activeSheet || 1);
+
   const { data: spreadsheet, isLoading: isLoadingSpreadsheet } = useQuery({
     queryKey: ["/api/spreadsheets", spreadsheetId],
   });

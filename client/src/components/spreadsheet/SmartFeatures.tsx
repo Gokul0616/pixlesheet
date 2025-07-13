@@ -347,13 +347,24 @@ function ExportOptionsDialog({ onAction }: { onAction: (action: string, data?: a
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportFormat, setExportFormat] = useState('xlsx');
   const [exportRange, setExportRange] = useState('current_sheet');
+  const [includeFormatting, setIncludeFormatting] = useState(true);
+  const [includeFormulas, setIncludeFormulas] = useState(true);
 
-  const handleExport = () => {
-    onAction('exportData', {
-      format: exportFormat,
-      range: exportRange
-    });
-    setExportDialogOpen(false);
+  const handleExport = async () => {
+    try {
+      onAction('exportData', {
+        format: exportFormat,
+        range: exportRange,
+        options: {
+          includeFormatting,
+          includeFormulas,
+          sheetName: 'Ultimate Pixel Sheet'
+        }
+      });
+      setExportDialogOpen(false);
+    } catch (error) {
+      console.error('Export failed:', error);
+    }
   };
 
   return (
@@ -368,7 +379,7 @@ function ExportOptionsDialog({ onAction }: { onAction: (action: string, data?: a
         <DialogHeader>
           <DialogTitle>Export Spreadsheet</DialogTitle>
           <DialogDescription>
-            Export your data in various formats
+            Export your data in various formats with advanced options
           </DialogDescription>
         </DialogHeader>
         
@@ -380,11 +391,11 @@ function ExportOptionsDialog({ onAction }: { onAction: (action: string, data?: a
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
-                <SelectItem value="csv">CSV</SelectItem>
-                <SelectItem value="pdf">PDF</SelectItem>
-                <SelectItem value="json">JSON</SelectItem>
-                <SelectItem value="html">HTML</SelectItem>
+                <SelectItem value="xlsx">Excel (.xlsx) - Full featured</SelectItem>
+                <SelectItem value="csv">CSV - Data only</SelectItem>
+                <SelectItem value="pdf">PDF - Print ready</SelectItem>
+                <SelectItem value="json">JSON - Structured data</SelectItem>
+                <SelectItem value="html">HTML - Web format</SelectItem>
                 <SelectItem value="ods">OpenDocument (.ods)</SelectItem>
                 <SelectItem value="tsv">Tab-separated (.tsv)</SelectItem>
               </SelectContent>
@@ -400,15 +411,45 @@ function ExportOptionsDialog({ onAction }: { onAction: (action: string, data?: a
               <SelectContent>
                 <SelectItem value="current_sheet">Current sheet</SelectItem>
                 <SelectItem value="all_sheets">All sheets</SelectItem>
-                <SelectItem value="selected_range">Selected range</SelectItem>
+                <SelectItem value="selected_range">Selected range only</SelectItem>
                 <SelectItem value="visible_cells">Visible cells only</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="bg-green-50 p-3 rounded-lg">
-            <p className="text-xs text-green-800">
-              📄 PDF exports will include formatting and charts for presentation-ready documents.
+          {(exportFormat === 'xlsx' || exportFormat === 'html' || exportFormat === 'pdf') && (
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="include-formatting"
+                  checked={includeFormatting}
+                  onCheckedChange={setIncludeFormatting}
+                />
+                <Label htmlFor="include-formatting">Include cell formatting</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="include-formulas"
+                  checked={includeFormulas}
+                  onCheckedChange={setIncludeFormulas}
+                />
+                <Label htmlFor="include-formulas">Include formulas</Label>
+              </div>
+            </div>
+          )}
+
+          <div className={`p-3 rounded-lg ${
+            exportFormat === 'xlsx' ? 'bg-green-50' : 
+            exportFormat === 'pdf' ? 'bg-blue-50' :
+            exportFormat === 'csv' ? 'bg-yellow-50' : 'bg-gray-50'
+          }`}>
+            <p className="text-xs text-gray-800">
+              {exportFormat === 'xlsx' && '📊 Excel format preserves all formatting, formulas, and data types'}
+              {exportFormat === 'pdf' && '📄 PDF format creates presentation-ready documents with charts'}
+              {exportFormat === 'csv' && '📝 CSV format is ideal for data import/export and analysis'}
+              {exportFormat === 'json' && '🔧 JSON format is perfect for API integration and data processing'}
+              {exportFormat === 'html' && '🌐 HTML format creates web-ready tables with styling'}
             </p>
           </div>
 

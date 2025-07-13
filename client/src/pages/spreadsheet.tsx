@@ -78,17 +78,14 @@ export default function SpreadsheetPage() {
   // Handle cell selection
   const handleCellSelect = (row: number, column: number) => {
     setSelectedCell({ row, column, sheetId: activeSheet || 1 });
+    setSelectedCells([{ row, column, sheetId: activeSheet || 1 }]);
     setFormulaValue(getCellDisplayValue(row, column));
   };
 
   const getCellDisplayValue = (row: number, column: number) => {
-    // Get from the cells data loaded by the ResizableGrid
-    const { data: cells } = useQuery({
-      queryKey: ["/api/sheets", activeSheet, "cells"],
-      enabled: !!activeSheet,
-    });
+    if (!cells) return "";
     
-    const cell = cells?.find((c: any) => c.row === row && c.column === column);
+    const cell = cells.find((c: any) => c.row === row && c.column === column);
     if (!cell) return "";
     
     // For editing, show the raw formula or value
@@ -566,6 +563,7 @@ export default function SpreadsheetPage() {
           setFormulaValue={setFormulaValue}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
+          onCellUpdate={handleCellUpdate}
         />
       )}
 

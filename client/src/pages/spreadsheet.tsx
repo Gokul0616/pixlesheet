@@ -144,7 +144,11 @@ export default function SpreadsheetPage() {
         break;
       case 'download':
         console.log('Download:', data);
-        handleDownload(data?.format || 'xlsx');
+        await handleDownload(data?.format || 'xlsx', data?.options || {});
+        break;
+      case 'exportData':
+        console.log('Export data:', data);
+        await handleDownload(data?.format || 'xlsx', data?.options || {});
         break;
       case 'format':
         console.log('Format:', data);

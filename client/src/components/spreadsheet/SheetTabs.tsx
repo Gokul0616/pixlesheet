@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { apiRequest } from "@/lib/queryClient";
-import { type Sheet } from "@shared/schema";
-import { useToast } from "@/hooks/use-toast";
+
+interface Sheet {
+  id: number;
+  name: string;
+  spreadsheetId: number;
+  index: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface SheetTabsProps {
   sheets: Sheet[];
@@ -16,112 +20,105 @@ interface SheetTabsProps {
 }
 
 export function SheetTabs({ sheets, activeSheet, setActiveSheet, spreadsheetId }: SheetTabsProps) {
-  const [isAddingSheet, setIsAddingSheet] = useState(false);
-  const [newSheetName, setNewSheetName] = useState("");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [isRenaming, setIsRenaming] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
-  const createSheetMutation = useMutation({
-    mutationFn: async (name: string) => {
-      const response = await apiRequest("POST", `/api/spreadsheets/${spreadsheetId}/sheets`, {
-        name,
-        index: sheets.length,
-      });
-      return response.json();
-    },
-    onSuccess: (newSheet) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/spreadsheets", spreadsheetId, "sheets"] });
-      setActiveSheet(newSheet.id);
-      setIsAddingSheet(false);
-      setNewSheetName("");
-      toast({
-        title: "Sheet created",
-        description: `Sheet "${newSheet.name}" has been created.`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error creating sheet",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAddSheet = () => {
-    if (newSheetName.trim()) {
-      createSheetMutation.mutate(newSheetName.trim());
-    } else {
-      const defaultName = `Sheet${sheets.length + 1}`;
-      createSheetMutation.mutate(defaultName);
-    }
+  const handleRename = (sheetId: number, currentName: string) => {
+    setIsRenaming(sheetId);
+    setRenameValue(currentName);
   };
 
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleAddSheet();
-    } else if (event.key === "Escape") {
-      setIsAddingSheet(false);
-      setNewSheetName("");
-    }
+  const saveRename = (sheetId: number) => {
+    // Here you would typically make an API call to rename the sheet
+    console.log(`Renaming sheet ${sheetId} to ${renameValue}`);
+    setIsRenaming(null);
   };
+
+  const cancelRename = () => {
+    setIsRenaming(null);
+    setRenameValue("");
+  };
+
+  const addNewSheet = () => {
+    // Here you would typically make an API call to create a new sheet
+    console.log("Adding new sheet");
+  };
+
+  if (!sheets || sheets.length === 0) {
+    return (
+      <div className="bg-white border-t border-gray-200 px-4 py-2 flex items-center">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={addNewSheet}
+          className="flex items-center space-x-1"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Add Sheet</span>
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white border-t border-gray-200">
-      <div className="flex items-center px-4 py-2">
-        <div className="flex items-center space-x-1">
-          {sheets.map((sheet) => (
-            <button
-              key={sheet.id}
-              onClick={() => setActiveSheet(sheet.id)}
-              className={cn(
-                "px-4 py-2 text-sm border-t border-r border-gray-200 bg-white cursor-pointer hover:bg-gray-50",
-                activeSheet === sheet.id && "bg-gray-50 border-b-2 border-b-primary text-primary"
-              )}
-            >
-              {sheet.name}
-            </button>
-          ))}
-
-          {isAddingSheet ? (
-            <div className="flex items-center space-x-2 px-2">
+    <div className="bg-white border-t border-gray-200 px-4 py-2 flex items-center space-x-1">
+      {/* Sheet Tabs */}
+      <div className="flex items-center space-x-1 flex-1 overflow-x-auto">
+        {sheets.map((sheet) => (
+          <div
+            key={sheet.id}
+            className={`
+              flex items-center px-3 py-1 border-t-2 cursor-pointer text-sm transition-colors
+              ${activeSheet === sheet.id 
+                ? 'border-t-blue-500 bg-blue-50 text-blue-700' 
+                : 'border-t-transparent bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }
+            `}
+            onClick={() => setActiveSheet(sheet.id)}
+            onDoubleClick={() => handleRename(sheet.id, sheet.name)}
+          >
+            {isRenaming === sheet.id ? (
               <Input
-                type="text"
-                value={newSheetName}
-                onChange={(e) => setNewSheetName(e.target.value)}
-                onKeyDown={handleKeyPress}
-                onBlur={() => {
-                  if (newSheetName.trim()) {
-                    handleAddSheet();
-                  } else {
-                    setIsAddingSheet(false);
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onBlur={() => saveRename(sheet.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    saveRename(sheet.id);
+                  } else if (e.key === 'Escape') {
+                    cancelRename();
                   }
                 }}
-                placeholder={`Sheet${sheets.length + 1}`}
-                className="w-24 h-8 text-sm"
+                className="w-20 h-6 text-xs px-1 py-0"
                 autoFocus
               />
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsAddingSheet(true)}
-              title="Add sheet"
-              className="ml-2 h-8 w-8 p-0"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+            ) : (
+              <span className="whitespace-nowrap">{sheet.name}</span>
+            )}
+          </div>
+        ))}
+      </div>
 
-        <div className="flex-1"></div>
-
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <span>{sheets.length} sheets</span>
-          <span>•</span>
-          <span>1,000 cells</span>
-        </div>
+      {/* Controls */}
+      <div className="flex items-center space-x-1 ml-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={addNewSheet}
+          title="Add new sheet"
+          className="h-8 w-8 p-0"
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          title="More sheet options"
+          className="h-8 w-8 p-0"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

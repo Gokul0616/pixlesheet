@@ -1,173 +1,218 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { X, Send, TrendingUp, AlertTriangle, Lightbulb } from "lucide-react";
-import { type Activity, type Collaborator } from "@shared/schema";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { X, Clock, MessageSquare, Users, Activity, History } from "lucide-react";
 
 interface SidebarProps {
-  activities: Activity[];
-  collaborators: Collaborator[];
+  activities: any[];
+  collaborators: any[];
   onClose: () => void;
 }
 
 export function Sidebar({ activities, collaborators, onClose }: SidebarProps) {
-  const [chatMessage, setChatMessage] = useState("");
+  const [activeTab, setActiveTab] = useState<"activity" | "comments" | "collaborators">("activity");
 
-  const handleSendMessage = () => {
-    if (chatMessage.trim()) {
-      // TODO: Implement chat functionality
-      console.log("Send message:", chatMessage);
-      setChatMessage("");
+  const mockComments = [
+    {
+      id: 1,
+      cellId: "A1",
+      user: "User 1",
+      content: "This data needs to be verified before we proceed with the analysis.",
+      createdAt: "2 hours ago",
+      isResolved: false
+    },
+    {
+      id: 2,
+      cellId: "B5",
+      user: "User 2",
+      content: "Let's review the Q1 numbers together",
+      createdAt: "1 day ago",
+      isResolved: true
     }
-  };
+  ];
 
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleSendMessage();
+  const mockTeamChat = [
+    {
+      id: 1,
+      user: "User 1",
+      message: "Let's review the Q1 numbers together",
+      timestamp: "2:30 PM"
+    },
+    {
+      id: 2,
+      user: "User 2",
+      message: "Looks good! Should we add a chart for better visualization?",
+      timestamp: "2:32 PM"
     }
-  };
+  ];
 
   return (
-    <div className="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Collaboration</h2>
+    <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <h2 className="text-lg font-semibold text-gray-900">Collaboration</h2>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="space-y-6">
-        {/* Recent Activity */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-800 mb-3">Recent Activity</h3>
-          <ScrollArea className="h-32">
-            <div className="space-y-3">
-              {activities.slice(0, 5).map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3">
-                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-medium">
-                    {activity.userId}
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200">
+        <button
+          className={`flex-1 px-4 py-2 text-sm font-medium ${
+            activeTab === "activity" 
+              ? "text-blue-600 border-b-2 border-blue-600" 
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          onClick={() => setActiveTab("activity")}
+        >
+          <Activity className="h-4 w-4 inline mr-1" />
+          Activity
+        </button>
+        <button
+          className={`flex-1 px-4 py-2 text-sm font-medium ${
+            activeTab === "comments" 
+              ? "text-blue-600 border-b-2 border-blue-600" 
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          onClick={() => setActiveTab("comments")}
+        >
+          <MessageSquare className="h-4 w-4 inline mr-1" />
+          Comments
+        </button>
+        <button
+          className={`flex-1 px-4 py-2 text-sm font-medium ${
+            activeTab === "collaborators" 
+              ? "text-blue-600 border-b-2 border-blue-600" 
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          onClick={() => setActiveTab("collaborators")}
+        >
+          <Users className="h-4 w-4 inline mr-1" />
+          Team
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {activeTab === "activity" && (
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-gray-900 mb-3">Recent Activity</div>
+            {activities && activities.length > 0 ? (
+              activities.map((activity, index) => (
+                <div key={index} className="flex items-start space-x-3 p-2 bg-gray-50 rounded-lg">
+                  <Clock className="h-4 w-4 text-gray-400 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900">{activity.action}</p>
+                    <p className="text-xs text-gray-500">{activity.createdAt}</p>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-700">
-                      User {activity.userId} {activity.action.replace("_", " ")}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {activity.createdAt ? new Date(activity.createdAt).toLocaleTimeString() : "Just now"}
-                    </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500">No recent activity</p>
+            )}
+          </div>
+        )}
+
+        {activeTab === "comments" && (
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-gray-900 mb-3">Comments</div>
+            {mockComments.map((comment) => (
+              <Card key={comment.id} className="shadow-sm">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm">{comment.user}</CardTitle>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs">
+                        {comment.cellId}
+                      </Badge>
+                      {comment.isResolved && (
+                        <Badge variant="secondary" className="text-xs">
+                          Resolved
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <CardDescription className="text-xs">{comment.createdAt}</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-gray-700">{comment.content}</p>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <Button variant="ghost" size="sm" className="text-xs h-6">
+                      Reply
+                    </Button>
+                    {!comment.isResolved && (
+                      <Button variant="ghost" size="sm" className="text-xs h-6">
+                        Resolve
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "collaborators" && (
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-gray-900 mb-3">Team Chat</div>
+            
+            {/* Online Collaborators */}
+            <div className="mb-6">
+              <div className="text-xs font-medium text-gray-500 mb-2">Online Now</div>
+              {collaborators && collaborators.length > 0 ? (
+                collaborators.map((collaborator, index) => (
+                  <div key={index} className="flex items-center space-x-2 p-2 bg-green-50 rounded-lg mb-2">
+                    <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                      {collaborator.username?.charAt(0)?.toUpperCase() || (index + 1)}
+                    </div>
+                    <span className="text-sm text-gray-700">{collaborator.username || `User ${index + 1}`}</span>
+                    <div className="w-2 h-2 bg-green-500 rounded-full ml-auto"></div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No collaborators online</p>
+              )}
+            </div>
+
+            {/* Team Chat */}
+            <div className="bg-gray-50 rounded-lg p-3 max-h-64 overflow-y-auto">
+              {mockTeamChat.map((message) => (
+                <div key={message.id} className="mb-3 last:mb-0">
+                  <div className="flex items-start space-x-2">
+                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-medium">
+                      {message.user.charAt(message.user.length - 1)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-medium text-gray-900">{message.user}</span>
+                        <span className="text-xs text-gray-500">{message.timestamp}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 mt-1">{message.message}</p>
+                    </div>
                   </div>
                 </div>
               ))}
-              {activities.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>
-              )}
             </div>
-          </ScrollArea>
-        </div>
 
-        <Separator />
-
-        {/* Comments */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-800 mb-3">Comments</h3>
-          <div className="space-y-4">
-            {/* TODO: Implement comments display */}
-            <div className="border border-gray-200 rounded-lg p-3">
-              <div className="flex items-center space-x-2 mb-2">
-                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-medium">
-                  1
-                </div>
-                <span className="text-sm font-medium text-gray-700">User 1</span>
-                <span className="text-xs text-gray-500">A1</span>
-              </div>
-              <p className="text-sm text-gray-700 mb-2">
-                This data needs to be verified before we proceed with the analysis.
-              </p>
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm" className="text-xs h-6 px-2">
-                  Reply
-                </Button>
-                <Button variant="ghost" size="sm" className="text-xs h-6 px-2">
-                  Resolve
-                </Button>
-              </div>
+            {/* Chat Input */}
+            <div className="mt-4">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
-        </div>
+        )}
+      </div>
 
-        <Separator />
-
-        {/* Team Chat */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-800 mb-3">Team Chat</h3>
-          <div className="border border-gray-200 rounded-lg">
-            <ScrollArea className="h-32 p-3">
-              <div className="space-y-2">
-                <div className="flex items-start space-x-2">
-                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-xs font-medium">
-                    1
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-600">User 1</p>
-                    <p className="text-sm text-gray-700">Let's review the Q1 numbers together</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
-                    2
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-600">User 2</p>
-                    <p className="text-sm text-gray-700">Looks good! Should we add a chart?</p>
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
-            <div className="border-t border-gray-200 p-3">
-              <div className="flex items-center space-x-2">
-                <Input
-                  type="text"
-                  value={chatMessage}
-                  onChange={(e) => setChatMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type a message..."
-                  className="flex-1 text-sm"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  disabled={!chatMessage.trim()}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Data Insights */}
-        <div>
-          <h3 className="text-sm font-medium text-gray-800 mb-3">Data Insights</h3>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
-                <span className="text-sm text-gray-700">Revenue trending upward</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm text-gray-700">Expenses increased 15%</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Lightbulb className="h-4 w-4 text-green-500" />
-                <span className="text-sm text-gray-700">Consider adding profit margin analysis</span>
-              </div>
-            </div>
-          </div>
+      {/* Footer */}
+      <div className="border-t border-gray-200 p-4">
+        <div className="flex items-center space-x-2 text-xs text-gray-500">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span>Real-time collaboration enabled</span>
         </div>
       </div>
     </div>

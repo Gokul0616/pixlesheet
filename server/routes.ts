@@ -10,6 +10,10 @@ import {
   insertCommentSchema,
   insertCollaboratorSchema,
   insertActivitySchema,
+  insertColumnMetadataSchema,
+  insertRowMetadataSchema,
+  insertPivotTableSchema,
+  insertNamedRangeSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {

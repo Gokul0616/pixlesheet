@@ -242,6 +242,200 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Column metadata routes
+  app.get("/api/sheets/:id/columns", async (req, res) => {
+    try {
+      const sheetId = parseInt(req.params.id);
+      const columns = await storage.getColumnMetadataBySheet(sheetId);
+      res.json(columns);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch column metadata" });
+    }
+  });
+
+  app.put("/api/sheets/:sheetId/columns/:columnIndex", async (req, res) => {
+    try {
+      const sheetId = parseInt(req.params.sheetId);
+      const columnIndex = parseInt(req.params.columnIndex);
+      const updates = req.body;
+      
+      const column = await storage.updateColumnMetadataByPosition(sheetId, columnIndex, updates);
+      res.json(column);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update column metadata" });
+    }
+  });
+
+  // Row metadata routes
+  app.get("/api/sheets/:id/rows", async (req, res) => {
+    try {
+      const sheetId = parseInt(req.params.id);
+      const rows = await storage.getRowMetadataBySheet(sheetId);
+      res.json(rows);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch row metadata" });
+    }
+  });
+
+  app.put("/api/sheets/:sheetId/rows/:rowIndex", async (req, res) => {
+    try {
+      const sheetId = parseInt(req.params.sheetId);
+      const rowIndex = parseInt(req.params.rowIndex);
+      const updates = req.body;
+      
+      const row = await storage.updateRowMetadataByPosition(sheetId, rowIndex, updates);
+      res.json(row);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update row metadata" });
+    }
+  });
+
+  // Pivot table routes
+  app.get("/api/sheets/:id/pivots", async (req, res) => {
+    try {
+      const sheetId = parseInt(req.params.id);
+      const pivots = await storage.getPivotTablesBySheet(sheetId);
+      res.json(pivots);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch pivot tables" });
+    }
+  });
+
+  app.post("/api/sheets/:id/pivots", async (req, res) => {
+    try {
+      const sheetId = parseInt(req.params.id);
+      const data = insertPivotTableSchema.parse({ ...req.body, sheetId });
+      const pivot = await storage.createPivotTable(data);
+      res.json(pivot);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid pivot table data" });
+    }
+  });
+
+  app.put("/api/pivots/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const pivot = await storage.updatePivotTable(id, updates);
+      res.json(pivot);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update pivot table" });
+    }
+  });
+
+  app.delete("/api/pivots/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deletePivotTable(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to delete pivot table" });
+    }
+  });
+
+  // Named ranges routes
+  app.get("/api/spreadsheets/:id/named-ranges", async (req, res) => {
+    try {
+      const spreadsheetId = parseInt(req.params.id);
+      const namedRanges = await storage.getNamedRangesBySpreadsheet(spreadsheetId);
+      res.json(namedRanges);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch named ranges" });
+    }
+  });
+
+  app.post("/api/spreadsheets/:id/named-ranges", async (req, res) => {
+    try {
+      const spreadsheetId = parseInt(req.params.id);
+      const data = insertNamedRangeSchema.parse({ ...req.body, spreadsheetId });
+      const namedRange = await storage.createNamedRange(data);
+      res.json(namedRange);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid named range data" });
+    }
+  });
+
+  app.put("/api/named-ranges/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates = req.body;
+      const namedRange = await storage.updateNamedRange(id, updates);
+      res.json(namedRange);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update named range" });
+    }
+  });
+
+  app.delete("/api/named-ranges/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteNamedRange(id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(400).json({ error: "Failed to delete named range" });
+    }
+  });
+
+  // Data validation endpoint
+  app.post("/api/sheets/:sheetId/cells/:row/:column/validate", async (req, res) => {
+    try {
+      const sheetId = parseInt(req.params.sheetId);
+      const row = parseInt(req.params.row);
+      const column = parseInt(req.params.column);
+      const { value, validation } = req.body;
+      
+      // Perform validation logic here
+      let isValid = true;
+      let message = "";
+      
+      if (validation) {
+        switch (validation.type) {
+          case 'list':
+            if (validation.listItems && !validation.listItems.includes(value)) {
+              isValid = false;
+              message = validation.customMessage || "Value must be from the allowed list";
+            }
+            break;
+          case 'number':
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+              isValid = false;
+              message = "Value must be a number";
+            } else if (validation.numberMin !== undefined && numValue < validation.numberMin) {
+              isValid = false;
+              message = `Value must be at least ${validation.numberMin}`;
+            } else if (validation.numberMax !== undefined && numValue > validation.numberMax) {
+              isValid = false;
+              message = `Value must be at most ${validation.numberMax}`;
+            }
+            break;
+          case 'text':
+            if (validation.textLength) {
+              if (validation.textLength.min && value.length < validation.textLength.min) {
+                isValid = false;
+                message = `Text must be at least ${validation.textLength.min} characters`;
+              } else if (validation.textLength.max && value.length > validation.textLength.max) {
+                isValid = false;
+                message = `Text must be at most ${validation.textLength.max} characters`;
+              }
+            }
+            break;
+          case 'date':
+            const dateValue = new Date(value);
+            if (isNaN(dateValue.getTime())) {
+              isValid = false;
+              message = "Value must be a valid date";
+            }
+            break;
+        }
+      }
+      
+      res.json({ isValid, message });
+    } catch (error) {
+      res.status(400).json({ error: "Validation failed" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time collaboration

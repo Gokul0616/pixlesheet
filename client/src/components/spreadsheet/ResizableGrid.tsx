@@ -455,21 +455,27 @@ export function ResizableGrid({
           const rowIndex = row + 1;
           const top = getRowPosition(rowIndex);
           const height = getRowHeight(rowIndex);
+          const isSelected = selectedRows.includes(rowIndex);
           
           return (
             <div key={`row-${row}`}>
               {/* Row header */}
               <div
-                className="absolute bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-200"
+                className={`
+                  absolute border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium cursor-pointer
+                  ${isSelected ? 'bg-blue-200 text-blue-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                `}
                 style={{
                   left: 0,
                   top,
                   width: headerWidth,
                   height
                 }}
-                onClick={() => {
-                  // Select entire row
-                  console.log(`Select row ${rowIndex}`);
+                onClick={(e) => handleRowHeaderClick(rowIndex, e.ctrlKey, e.shiftKey)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setShowManualResize({ type: 'row', index: rowIndex });
+                  setManualSize(String(height));
                 }}
               >
                 {rowIndex}
@@ -485,6 +491,8 @@ export function ResizableGrid({
                   height: 4
                 }}
                 onMouseDown={(e) => handleResizeStart(e, 'row', rowIndex)}
+                onDoubleClick={() => handleDoubleClickResize('row', rowIndex)}
+                title="Drag to resize, double-click to auto-fit"
               />
               
               {/* Cells in this row */}

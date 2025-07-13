@@ -59,17 +59,6 @@ export default function SpreadsheetPage() {
     queryKey: ["/api/spreadsheets", spreadsheetId, "collaborators"],
   });
 
-  const {
-    selectedCell,
-    activeSheet,
-    setActiveSheet,
-    formulaValue,
-    setFormulaValue,
-    isEditing,
-    setIsEditing,
-    saveStatus,
-  } = useSpreadsheet(spreadsheetId);
-
   // WebSocket integration for real-time collaboration
   const {
     isConnected,

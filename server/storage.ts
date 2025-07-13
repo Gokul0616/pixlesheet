@@ -407,6 +407,150 @@ export class MemStorage implements IStorage {
     this.activities.set(activity.id, activity);
     return activity;
   }
+
+  // Column metadata methods
+  async getColumnMetadataBySheet(sheetId: number): Promise<ColumnMetadata[]> {
+    return Array.from(this.columnMetadata.values()).filter(c => c.sheetId === sheetId);
+  }
+
+  async createColumnMetadata(insertMetadata: InsertColumnMetadata): Promise<ColumnMetadata> {
+    const metadata: ColumnMetadata = {
+      id: this.currentColumnMetadataId++,
+      ...insertMetadata,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.columnMetadata.set(metadata.id, metadata);
+    return metadata;
+  }
+
+  async updateColumnMetadata(id: number, updates: Partial<ColumnMetadata>): Promise<ColumnMetadata> {
+    const metadata = this.columnMetadata.get(id);
+    if (!metadata) throw new Error("Column metadata not found");
+    
+    const updated = { ...metadata, ...updates, updatedAt: new Date() };
+    this.columnMetadata.set(id, updated);
+    return updated;
+  }
+
+  async updateColumnMetadataByPosition(sheetId: number, columnIndex: number, updates: Partial<ColumnMetadata>): Promise<ColumnMetadata> {
+    const existing = Array.from(this.columnMetadata.values()).find(
+      c => c.sheetId === sheetId && c.columnIndex === columnIndex
+    );
+    
+    if (existing) {
+      return this.updateColumnMetadata(existing.id, updates);
+    } else {
+      return this.createColumnMetadata({
+        sheetId,
+        columnIndex,
+        width: updates.width || 100,
+        isHidden: updates.isHidden || false,
+        autoFit: updates.autoFit || false,
+      });
+    }
+  }
+
+  // Row metadata methods
+  async getRowMetadataBySheet(sheetId: number): Promise<RowMetadata[]> {
+    return Array.from(this.rowMetadata.values()).filter(r => r.sheetId === sheetId);
+  }
+
+  async createRowMetadata(insertMetadata: InsertRowMetadata): Promise<RowMetadata> {
+    const metadata: RowMetadata = {
+      id: this.currentRowMetadataId++,
+      ...insertMetadata,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.rowMetadata.set(metadata.id, metadata);
+    return metadata;
+  }
+
+  async updateRowMetadata(id: number, updates: Partial<RowMetadata>): Promise<RowMetadata> {
+    const metadata = this.rowMetadata.get(id);
+    if (!metadata) throw new Error("Row metadata not found");
+    
+    const updated = { ...metadata, ...updates, updatedAt: new Date() };
+    this.rowMetadata.set(id, updated);
+    return updated;
+  }
+
+  async updateRowMetadataByPosition(sheetId: number, rowIndex: number, updates: Partial<RowMetadata>): Promise<RowMetadata> {
+    const existing = Array.from(this.rowMetadata.values()).find(
+      r => r.sheetId === sheetId && r.rowIndex === rowIndex
+    );
+    
+    if (existing) {
+      return this.updateRowMetadata(existing.id, updates);
+    } else {
+      return this.createRowMetadata({
+        sheetId,
+        rowIndex,
+        height: updates.height || 21,
+        isHidden: updates.isHidden || false,
+        autoFit: updates.autoFit || false,
+      });
+    }
+  }
+
+  // Pivot table methods
+  async getPivotTablesBySheet(sheetId: number): Promise<PivotTable[]> {
+    return Array.from(this.pivotTables.values()).filter(p => p.sheetId === sheetId);
+  }
+
+  async createPivotTable(insertPivotTable: InsertPivotTable): Promise<PivotTable> {
+    const pivotTable: PivotTable = {
+      id: this.currentPivotTableId++,
+      ...insertPivotTable,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.pivotTables.set(pivotTable.id, pivotTable);
+    return pivotTable;
+  }
+
+  async updatePivotTable(id: number, updates: Partial<PivotTable>): Promise<PivotTable> {
+    const pivotTable = this.pivotTables.get(id);
+    if (!pivotTable) throw new Error("Pivot table not found");
+    
+    const updated = { ...pivotTable, ...updates, updatedAt: new Date() };
+    this.pivotTables.set(id, updated);
+    return updated;
+  }
+
+  async deletePivotTable(id: number): Promise<void> {
+    this.pivotTables.delete(id);
+  }
+
+  // Named range methods
+  async getNamedRangesBySpreadsheet(spreadsheetId: number): Promise<NamedRange[]> {
+    return Array.from(this.namedRanges.values()).filter(n => n.spreadsheetId === spreadsheetId);
+  }
+
+  async createNamedRange(insertNamedRange: InsertNamedRange): Promise<NamedRange> {
+    const namedRange: NamedRange = {
+      id: this.currentNamedRangeId++,
+      ...insertNamedRange,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.namedRanges.set(namedRange.id, namedRange);
+    return namedRange;
+  }
+
+  async updateNamedRange(id: number, updates: Partial<NamedRange>): Promise<NamedRange> {
+    const namedRange = this.namedRanges.get(id);
+    if (!namedRange) throw new Error("Named range not found");
+    
+    const updated = { ...namedRange, ...updates, updatedAt: new Date() };
+    this.namedRanges.set(id, updated);
+    return updated;
+  }
+
+  async deleteNamedRange(id: number): Promise<void> {
+    this.namedRanges.delete(id);
+  }
 }
 
 export const storage = new MemStorage();

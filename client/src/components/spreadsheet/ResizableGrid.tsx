@@ -407,21 +407,27 @@ export function ResizableGrid({
           const colIndex = col + 1;
           const left = getColumnPosition(colIndex);
           const width = getColumnWidth(colIndex);
+          const isSelected = selectedColumns.includes(colIndex);
           
           return (
             <div key={`col-header-${col}`}>
               {/* Column header */}
               <div
-                className="absolute bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium text-gray-600 cursor-pointer hover:bg-gray-200"
+                className={`
+                  absolute border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium cursor-pointer
+                  ${isSelected ? 'bg-blue-200 text-blue-800' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                `}
                 style={{
                   left,
                   top: 0,
                   width,
                   height: headerHeight
                 }}
-                onClick={() => {
-                  // Select entire column
-                  console.log(`Select column ${getColumnLetter(colIndex)}`);
+                onClick={(e) => handleColumnHeaderClick(colIndex, e.ctrlKey, e.shiftKey)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setShowManualResize({ type: 'column', index: colIndex });
+                  setManualSize(String(width));
                 }}
               >
                 {getColumnLetter(colIndex)}
@@ -438,6 +444,7 @@ export function ResizableGrid({
                 }}
                 onMouseDown={(e) => handleResizeStart(e, 'column', colIndex)}
                 onDoubleClick={() => handleDoubleClickResize('column', colIndex)}
+                title="Drag to resize, double-click to auto-fit"
               />
             </div>
           );

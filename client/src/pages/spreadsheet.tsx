@@ -424,6 +424,15 @@ export default function SpreadsheetPage() {
         zoom={zoom}
       />
 
+      {/* Smart Features */}
+      <SmartFeatures onAction={handleToolbarAction} />
+
+      {/* Advanced Features */}
+      <AdvancedFeatures 
+        selectedCell={selectedCell}
+        onAction={handleToolbarAction}
+      />
+
       {/* Formatting Toolbar */}
       <FormattingToolbar
         selectedCell={selectedCell}
